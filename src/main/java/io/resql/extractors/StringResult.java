@@ -19,4 +19,9 @@ public class StringResult extends SingleResultBase< String > {
 	protected String getExtractorTypeDescription() {
 		return "string";
 	}
+
+	@Override
+	public String extract(ResultSet rs) throws SQLException {
+		return null; // TODO: implement
+	}
 }

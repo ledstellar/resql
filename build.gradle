@@ -1,17 +1,29 @@
 apply plugin: 'java'
 
 repositories {
-	maven { url "https://mvnrepository.com/artifact" }
+	mavenLocal()
 	maven { url "http://repo.spring.io/release" }
 	mavenCentral()
 }
 
+compileJava   {
+	sourceCompatibility = '1.9'
+	targetCompatibility = '1.9'
+}
+
+compileTestJava   {
+	sourceCompatibility = '1.9'
+	targetCompatibility = '1.9'
+}
+
 dependencies {
 	compile 'ch.qos.logback:logback-classic:1.1.3'
-	compileOnly "org.projectlombok:lombok:1.16.10"
+//	compile "resql:annotation_processor:1.0-SNAPSHOT"
+//	compileOnly "org.projectlombok:lombok:1.16.10"
 
 	testCompile "junit:junit:4.12", "com.zaxxer:HikariCP:2.4.7", "org.springframework:spring-test:4.3.2.RELEASE",
 			"org.springframework:spring-context:4.3.2.RELEASE", "org.ow2.asm:asm:5.1", "org.ow2.asm:asm-commons:5.1",
 			"org.postgresql:postgresql:9.4.1211.jre7"
-	testCompileOnly "org.projectlombok:lombok:1.16.10"
+//	testCompile "resql:annotation_processor:1.0-SNAPSHOT"
+//	testCompileOnly "org.projectlombok:lombok:1.16.10"
 }

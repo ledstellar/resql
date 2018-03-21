@@ -19,4 +19,9 @@ public class DateResult extends SingleResultBase< Date > {
 	protected String getExtractorTypeDescription() {
 		return "date";
 	}
+
+	@Override
+	public Date extract(ResultSet rs) throws SQLException {
+		return null; // TODO: implement
+	}
 }

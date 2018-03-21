@@ -352,9 +352,12 @@ top:
 			classLoaderClass = classLoaderClass.getSuperclass();
 		} while ( classLoaderClass != null );
 		// Method method = classLoader.getClass().getDeclaredMethod( "defineClass", String.class, byte[].class, int.class, int.class );
+		if ( foundMethod == null ) {
+			throw new RuntimeException( "Method not found!" );
+		}
 		foundMethod.setAccessible( true );
 		Class clazz = (Class) foundMethod.invoke( classLoader, "io.resql.asmaccesstest.TargetClass_SyntheticAccessor", classBytes, 0, classBytes.length );
-		return (ClassAccessor) clazz.newInstance();
+		return (ClassAccessor) clazz.<ClassAccessor>getDeclaredConstructor().newInstance();
 	}
 
 	@Ignore( "Perspective feature" )

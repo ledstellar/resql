@@ -19,4 +19,10 @@ public class IntResult extends SingleResultBase< Integer > {
 	protected String getExtractorTypeDescription() {
 		return "integer";
 	}
+
+	@Override
+	public Integer extract(ResultSet rs) throws SQLException {
+		Integer a;
+			return null; // TODO: implement
+	}
 }

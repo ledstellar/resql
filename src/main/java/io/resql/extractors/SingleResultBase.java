@@ -15,7 +15,6 @@ abstract class SingleResultBase< ResultType > implements Extractor< ResultType >
 		this.isNullAllowed = isNullAllowed;
 	}
 
-	@Override
 	public ResultType extract(ResultSet rs, Logger log) throws SQLException {
 		if ( rs.next() ) {
 			ResultType result = getTypedResult( rs );

@@ -21,6 +21,6 @@ public class ReferenceMultiDbUsage {
 	@Ignore( "Next step" )
 	@Test
 	public void testSingleExtractor() {
-		int result = dbPipe.query( IntResult.single, "SELECT 1 FROM dual" );
+
 	}
 }
