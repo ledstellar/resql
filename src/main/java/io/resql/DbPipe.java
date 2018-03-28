@@ -40,10 +40,17 @@ public interface DbPipe {
 	<T> void upsert( T dto );
 	<T> void updateChanged( T before, T after );
 	<T> void updateChanged( T after );
-	<T> void execute( CharSequence sql, Object... params );
-	<T> void executeUpper( Object... params );
-	<T> void executeSingle( CharSequence sql, Object... params );
-	<T> void executeUpperSingle( Object... params );
+
+	/**
+	 * Execute given (supposedly update) query
+	 * @param sql the query
+	 * @param params query params
+	 * @return number of records processed (if database returns this info)
+	 */
+	int execute( CharSequence sql, Object... params );
+	void executeUpper( Object... params );
+	void executeSingle( CharSequence sql, Object... params );
+	void executeUpperSingle( Object... params );
 
 	/* V3 methods begin */
 

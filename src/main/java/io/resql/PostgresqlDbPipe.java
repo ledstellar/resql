@@ -2,9 +2,7 @@ package io.resql;
 
 import org.slf4j.Logger;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Collection;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -122,25 +120,58 @@ public class PostgresqlDbPipe implements DbPipe {
 	}
 
 	@Override
-	public <T> void execute(CharSequence sql, Object... params) {
+	public int execute(CharSequence sql, Object... params) {
+		try (Connection connection = dbManager.getConnection()) {
+			Statement statement;
+			if (params == null) {
+				statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+				if ( log.isDebugEnabled() ) {
+					log.debug( sql.toString() );
+				}
+			} else {
+				PreparedStatement preparedStatement = connection.prepareStatement(sql.toString(),ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+				statement = preparedStatement;
+				fillStatementWithParams(preparedStatement, params);
+				preparedStatement.execute();
+				if ( log.isDebugEnabled() ) {
+					log.debug( injectParamsForDebug( sql, params ) );
+				}
+			}
+			if (statement.execute(sql.toString())) {
+				throw new SqlException("Unexpected ResultSet received in execute call. Use queryXXX(...) functions instead");
+			}
+			return statement.getUpdateCount();
+		} catch ( SQLException sqle ) {
+			throw new SqlException( "Error executing " + sql, sqle );	// TODO: implement
+		}
+	}
+
+	private void fillStatementWithParams(PreparedStatement statement, Object[] params) throws SQLException {
+		int index = 1;
+		for ( Object param : params ) {
+			statement.setObject(index++, param);
+		}
+	}
+
+	private String injectParamsForDebug(CharSequence sql, Object[] params) {
+		// TODO: implement
+		return "";
+	}
+
+	@Override
+	public void executeUpper( Object... params ) {
 		// TODO: implement
 		throw new RuntimeException( "Not implemented yet" );
 	}
 
 	@Override
-	public < T > void executeUpper( Object... params ) {
+	public void executeSingle(CharSequence sql, Object... params) {
 		// TODO: implement
 		throw new RuntimeException( "Not implemented yet" );
 	}
 
 	@Override
-	public <T> void executeSingle(CharSequence sql, Object... params) {
-		// TODO: implement
-		throw new RuntimeException( "Not implemented yet" );
-	}
-
-	@Override
-	public < T > void executeUpperSingle( Object... params ) {
+	public void executeUpperSingle( Object... params ) {
 		// TODO: implement
 		throw new RuntimeException( "Not implemented yet" );
 	}
