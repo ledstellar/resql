@@ -1,7 +1,6 @@
 package io.resql;
 
 import com.zaxxer.hikari.HikariDataSource;
-import io.resql.extractors.IntResult;
 import org.junit.*;
 import org.slf4j.*;
 

@@ -5,9 +5,7 @@ import org.slf4j.Logger;
 import java.sql.*;
 import java.util.Collection;
 import java.util.function.Supplier;
-import java.util.stream.IntStream;
-import java.util.stream.LongStream;
-import java.util.stream.Stream;
+import java.util.stream.*;
 
 public class PostgresqlDbPipe implements DbPipe {
 	private PostgresqlDbManager dbManager;
@@ -123,27 +121,42 @@ public class PostgresqlDbPipe implements DbPipe {
 	public int execute(CharSequence sql, Object... params) {
 		try (Connection connection = dbManager.getConnection()) {
 			Statement statement;
+			boolean resultCountOrSetFlag;
 			if (params == null) {
 				statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-				if ( log.isDebugEnabled() ) {
-					log.debug( sql.toString() );
-				}
+				resultCountOrSetFlag = statement.execute(sql.toString());
 			} else {
 				PreparedStatement preparedStatement = connection.prepareStatement(sql.toString(),ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 				statement = preparedStatement;
 				fillStatementWithParams(preparedStatement, params);
-				preparedStatement.execute();
-				if ( log.isDebugEnabled() ) {
-					log.debug( injectParamsForDebug( sql, params ) );
-				}
+				resultCountOrSetFlag = preparedStatement.execute();
 			}
-			if (statement.execute(sql.toString())) {
+			debugSql(sql,null);
+			if (resultCountOrSetFlag) {
 				throw new SqlException("Unexpected ResultSet received in execute call. Use queryXXX(...) functions instead");
 			}
 			return statement.getUpdateCount();
 		} catch ( SQLException sqle ) {
 			throw new SqlException( "Error executing " + sql, sqle );	// TODO: implement
 		}
+	}
+
+	private void debugSql(CharSequence sql, Object[] params) {
+		if (log.isDebugEnabled()) {
+			log.debug(getCallerSrcLine()+(params==null?sql:injectParamsForDebug(sql,params)));
+		}
+	}
+
+	private String getCallerSrcLine() {
+		StackWalker.StackFrame frame = StackWalker.getInstance().walk(
+			s -> s.dropWhile( f -> f.getClassName().endsWith( ".PostgresqlDbPipe" ) )
+				.limit(1)
+				.findAny()
+				.orElse(  null ) );
+		if (frame==null) {
+			return "";
+		}
+		return "/*(" + frame.getFileName() + ':' + frame.getLineNumber() + ")*/ ";
 	}
 
 	private void fillStatementWithParams(PreparedStatement statement, Object[] params) throws SQLException {

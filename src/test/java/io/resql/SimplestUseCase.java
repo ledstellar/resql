@@ -1,7 +1,7 @@
 package io.resql;
 
 import com.zaxxer.hikari.*;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.*;
 
 import java.lang.reflect.Field;
@@ -30,14 +30,13 @@ public class SimplestUseCase {
 		HikariDataSource dataSource = new HikariDataSource( config );
 		PostgresqlDbManager dbManager = new PostgresqlDbManager( dataSource );
 		PostgresqlDbPipe pipe = dbManager.getPipe( log );
-		pipe.execute("CREATE TABLE test_table( id SERIAL, text_data TEXT )" );
+		Assert.assertEquals(
+			"No records must be processed by DDL queries", 0,
+			pipe.execute("CREATE TABLE IF NOT EXISTS test_table( id SERIAL, text_data TEXT )" )
+		);
+		Assert.assertEquals(
+			"No records must be processed by DDL queries", 0,
+			pipe.execute("DROP TABLE test_table" )
+		);
 	}
-
-	private void compareWatches() {
-// 		dbPipe.query( "SELECT NOW() - ? AS time_diff", rs -> { return rs.getInt(); } )
-	}
-
-/*	public static void main( String args[] ) {
-		SimplestUseCase useCase = new SimplestUseCase();
- 	}*/
 }
