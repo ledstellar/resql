@@ -16,14 +16,6 @@ public class SimplestUseCase {
 
 	public SimplestUseCase() {}
 
-	private Map<Integer, String> getAllJdbcTypeNames() throws IllegalAccessException {
-		Map<Integer, String> result = new HashMap<>();
-		for (Field field : Types.class.getFields()) {
-			result.put((Integer)field.get(null), field.getName());
-		}
-		return result;
-	}
-
 	@Test
 	public void testSimplestUseCase() {
 		HikariConfig config = new HikariConfig("/simple_use_case_hikari.properties" );

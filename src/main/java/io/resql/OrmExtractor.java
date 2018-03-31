@@ -7,5 +7,5 @@ import java.util.stream.Stream;
 
 @FunctionalInterface
 public interface OrmExtractor< OrmType, ReturnType > {
-	ReturnType extract(Stream< OrmType  > ormStream, Logger log ) throws SQLException;
+	ReturnType extract(Stream< OrmType  > ormStream, Logger log) throws SQLException;
 }
