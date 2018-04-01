@@ -1,5 +1,6 @@
 package io.resql;
 
+import io.resql.orm.AccessorFactory;
 import org.slf4j.Logger;
 
 import javax.sql.DataSource;
@@ -9,6 +10,7 @@ import javax.sql.DataSource;
  */
 public abstract class DbManager {
 	DataSource dataSource;
+	AccessorFactory accessorFactory;
 
 	DbManager( DataSource dataSource ) {
 		this.dataSource = dataSource;

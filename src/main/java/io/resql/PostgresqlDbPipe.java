@@ -1,5 +1,6 @@
 package io.resql;
 
+import io.resql.orm.*;
 import org.slf4j.Logger;
 
 import java.sql.*;
@@ -34,24 +35,31 @@ public class PostgresqlDbPipe implements DbPipe {
 	@Override
 	public int execute(CharSequence sql, Object... params) {
 		try (Connection connection = dbManager.getConnection()) {
-			Statement statement;
-			boolean resultCountOrSetFlag;
-			if (params == null) {
-				statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-				resultCountOrSetFlag = statement.execute(sql.toString());
-			} else {
-				PreparedStatement preparedStatement = connection.prepareStatement(sql.toString(),ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-				statement = preparedStatement;
-				fillStatementWithParams(preparedStatement, params);
-				resultCountOrSetFlag = preparedStatement.execute();
-			}
+			Statement statement = createStatementAndExecute( connection, sql.toString(), params, false );
 			debugSql(sql,null);
-			if (resultCountOrSetFlag) {
-				throw new SqlException("Unexpected ResultSet received in execute call. Use queryXXX(...) functions instead");
-			}
 			return statement.getUpdateCount();
-		} catch ( SQLException sqle ) {
-			throw new SqlException( "Error executing " + sql, sqle );	// TODO: implement
+		} catch ( SQLException sqlException ) {
+			throw new SqlException( "Can't createOrGet update count", sqlException );	// TODO: implement detailed logging
+		}
+	}
+
+	private void checkResultType( boolean isResultSetAwaiting, boolean isResultSetActual) {
+		if ( !isResultSetAwaiting && isResultSetActual ) {
+			throw new ConstraintException( "Unexpected ResultSet received!" );
+		}
+	}
+
+	private Statement createStatementAndExecute( Connection connection, CharSequence sql, Object[] params, boolean isResultSetAwaiting) throws SQLException {
+		String sqlString = sql.toString();
+		if ( params == null ) {
+			Statement statement = connection.createStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE );
+			checkResultType( isResultSetAwaiting, statement.execute( sqlString ) );
+			return statement;
+		} else {
+			PreparedStatement preparedStatement = connection.prepareStatement( sqlString, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE );
+			fillStatementWithParams( preparedStatement, params );
+			checkResultType( isResultSetAwaiting, preparedStatement.execute() );
+			return preparedStatement;
 		}
 	}
 
@@ -96,17 +104,24 @@ public class PostgresqlDbPipe implements DbPipe {
 		}
 	}
 
-	protected Connection getConnection() throws SQLException {
-		return dbManager.getConnection();
+	private <T,ResultT> ResultT internalSelect(Processor<T,ResultT> processor, Supplier<T> factory, Class<T> targetClass, CharSequence sql, Object... params) {
+		try (Connection connection = dbManager.getConnection()) {
+			Statement statement = createStatementAndExecute( connection, sql, params, true );
+			ResultSet resultSet = statement.getResultSet();
+			Accessor accessor = dbManager.accessorFactory.createOrGet(sql.toString(), resultSet.getMetaData(), factory, targetClass);
+			return processor.process(new ResultSetSupplier<T>(resultSet, accessor));
+		} catch ( SQLException sqle ) {
+			throw new SqlException( "Error executing " + sql, sqle );	// TODO: implement detailed logging
+		}
 	}
 
 	@Override
 	public <T,ResultT> ResultT select(Processor<T,ResultT> processor, Supplier<T> factory, CharSequence sql, Object... params) {
-		return null;
+		return internalSelect(processor, factory, null, sql, params);
 	}
 
 	@Override
 	public <T,ResultT> ResultT select(Processor<T,ResultT> processor, Class<T> targetClass, CharSequence sql, Object... params) {
-		return null;
+		return internalSelect(processor, null, targetClass, sql, params);
 	}
 }
