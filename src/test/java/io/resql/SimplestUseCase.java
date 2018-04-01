@@ -4,9 +4,8 @@ import com.zaxxer.hikari.*;
 import org.junit.*;
 import org.slf4j.*;
 
-import java.lang.reflect.Field;
-import java.sql.Types;
-import java.util.*;
+import java.lang.reflect.Constructor;
+import java.util.function.*;
 
 /**
  * Typical use case of reSql without any DI or something
@@ -24,11 +23,22 @@ public class SimplestUseCase {
 		PostgresqlDbPipe pipe = dbManager.getPipe( log );
 		Assert.assertEquals(
 			"No records must be processed by DDL queries", 0,
-			pipe.execute("CREATE TABLE IF NOT EXISTS test_table( id SERIAL, text_data TEXT )" )
+			pipe.execute("CREATE TABLE IF NOT EXISTS users(id SERIAL, name TEXT)" )
 		);
+		User user = pipe.select(As::single, User.class,"SELECT * FROM users WHERE id=?", 1);
+		Assert.assertEquals("Users should be the same",user,new  User(1, "User Name"));
 		Assert.assertEquals(
 			"No records must be processed by DDL queries", 0,
 			pipe.execute("DROP TABLE test_table" )
 		);
+	}
+
+	@Test
+	public void testShortestUseCase() {
+		new PostgresqlDbManager(
+			new HikariDataSource(
+				new HikariConfig("/simple_use_case_hikari.properties" )
+			)
+		).getPipe( log ).execute( "CREATE TABLE IF NOT EXISTS test_table( id SERIAL, text_data TEXT )" );
 	}
 }

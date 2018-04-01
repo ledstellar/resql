@@ -104,4 +104,9 @@ public class PostgresqlDbPipe implements DbPipe {
 	public <T,ResultT> ResultT select(Processor<T,ResultT> processor, Supplier<T> factory, CharSequence sql, Object... params) {
 		return null;
 	}
+
+	@Override
+	public <T,ResultT> ResultT select(Processor<T,ResultT> processor, Class<T> targetClass, CharSequence sql, Object... params) {
+		return null;
+	}
 }
