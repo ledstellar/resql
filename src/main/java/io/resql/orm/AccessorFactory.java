@@ -1,9 +1,12 @@
 package io.resql.orm;
 
-import java.sql.*;
+import java.sql.ResultSetMetaData;
+import java.util.HashMap;
 import java.util.function.Supplier;
 
 public class AccessorFactory {
+	private HashMap<Object,AccessorSet> accessorSets = new HashMap<>();
+
 	/**
 	 * Create new accessor or find and return existing one. Either factory or targetClass parameters should be set (but not both).
 	 * @param sql SQL query for this accessor. Used to distinguish exact accessor if there are many for given factoty or targetClass
@@ -15,7 +18,8 @@ public class AccessorFactory {
 	 * @param <T> ORM class
 	 * @return accessor for ORM class instance initialization
 	 */
-	public <T> Accessor createOrGet( String sql, ResultSetMetaData metaData, Supplier<T> factory, Class<T> targetClass) {
+	public <T> Accessor createOrGet(CharSequence sql, ResultSetMetaData metaData, Supplier<T> factory, Class<T> targetClass) {
+		AccessorSet accessorSet = accessorSets.get(factory==null?targetClass:factory);
 		return null;	// TODO: implement
 	}
 }

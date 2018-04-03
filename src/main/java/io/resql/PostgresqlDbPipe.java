@@ -108,7 +108,7 @@ public class PostgresqlDbPipe implements DbPipe {
 		try (Connection connection = dbManager.getConnection()) {
 			Statement statement = createStatementAndExecute( connection, sql, params, true );
 			ResultSet resultSet = statement.getResultSet();
-			Accessor accessor = dbManager.accessorFactory.createOrGet(sql.toString(), resultSet.getMetaData(), factory, targetClass);
+			Accessor accessor = dbManager.accessorFactory.createOrGet(sql, resultSet.getMetaData(), factory, targetClass);
 			return processor.process(new ResultSetSupplier<T>(resultSet, accessor));
 		} catch ( SQLException sqle ) {
 			throw new SqlException( "Error executing " + sql, sqle );	// TODO: implement detailed logging
