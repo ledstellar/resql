@@ -1,11 +1,12 @@
 package io.resql.orm;
 
-import java.sql.ResultSetMetaData;
+import java.sql.*;
 import java.util.HashMap;
 import java.util.function.Supplier;
 
 public class AccessorFactory {
-	private HashMap<Object,AccessorSet> accessorSets = new HashMap<>();
+	/** Aggregate storage for all type accessors */
+	private HashMap<Object,AccessorSet<CharSequence,?>> accessorSets = new HashMap<>();
 
 	/**
 	 * Create new accessor or find and return existing one. Either factory or targetClass parameters should be set (but not both).
@@ -18,8 +19,14 @@ public class AccessorFactory {
 	 * @param <T> ORM class
 	 * @return accessor for ORM class instance initialization
 	 */
-	public <T> Accessor createOrGet(CharSequence sql, ResultSetMetaData metaData, Supplier<T> factory, Class<T> targetClass) {
-		AccessorSet accessorSet = accessorSets.get(factory==null?targetClass:factory);
-		return null;	// TODO: implement
+	@SuppressWarnings( {"unchecked"})
+	public <T> Accessor<T> createOrGet(CharSequence sql, ResultSetMetaData metaData, Supplier factory, Class targetClass) throws SQLException {
+		final Object key = factory==null?targetClass:factory;
+		AccessorSet<CharSequence,?> accessorSet = accessorSets.get(key);
+		if ( accessorSet == null ) {
+			accessorSet = new AccessorSet<>();
+			accessorSets.put(key,accessorSet);
+		}
+		return  (Accessor<T>) accessorSet.get(sql, metaData, factory, targetClass);
 	}
 }

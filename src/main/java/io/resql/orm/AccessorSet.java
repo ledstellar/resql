@@ -1,14 +1,14 @@
 package io.resql.orm;
 
-import java.sql.ResultSetMetaData;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.function.Supplier;
 
-public class AccessorSet< KeyT, AccessorT > {
+class AccessorSet< KeyT, AccessorT > {
 	private final AlmostConstantKeyedList< KeyT > keys = new AlmostConstantKeyedList<>();
 	private final ArrayList<Accessor<AccessorT>> accessors = new ArrayList<>();
 
-	Accessor<AccessorT> get(KeyT sql, ResultSetMetaData metaData, Supplier<AccessorT> factory, Class<AccessorT> targetClass) {
+	Accessor<AccessorT> get(KeyT sql, ResultSetMetaData metaData, Supplier<AccessorT> factory, Class<AccessorT> targetClass) throws SQLException {
 		int index = keys.indexOf( sql );
 		Accessor< AccessorT > accessor;
 		if ( index >= accessors.size() ) {
