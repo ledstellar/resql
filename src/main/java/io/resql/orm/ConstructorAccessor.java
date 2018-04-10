@@ -1,6 +1,7 @@
 package io.resql.orm;
 
 import io.resql.SqlException;
+import io.resql.util.TypeNames;
 
 import java.lang.reflect.*;
 import java.sql.*;
@@ -11,51 +12,43 @@ class ConstructorAccessor<T> extends Accessor<T> {
 	private Constructor<T> constructor;
 	private Convertor[] paramConvertors;
 
-	@FunctionalInterface
 	private interface ConstructorChecker {
 		boolean isConstructorFit(Parameter[] params, ResultSetMetaData metaData) throws SQLException;
+
+		void setupConvertors(Parameter[] params, ResultSetMetaData metaData) throws SQLException;
 	}
 
 	@SuppressWarnings("unchecked")
 	ConstructorAccessor(ResultSetMetaData metaData, Class<T> targetClass) throws SQLException {
-		constructor = findConstructor(metaData, targetClass);
+		scanForConstructors(metaData, targetClass);
 		constructor.setAccessible(true);
-		
 	}
 
-	private Constructor findConstructor(ResultSetMetaData metaData, Class<T> targetClass) throws SQLException {
+	private void scanForConstructors(ResultSetMetaData metaData, Class<T> targetClass) throws SQLException {
 		Constructor<?> declaredConstructors[] = targetClass.getDeclaredConstructors();
-		Constructor constructor;
-		constructor = scan(declaredConstructors, metaData, "name", this::isParamsFitByName);
-		if (constructor == null) {
-			constructor = scan(declaredConstructors, metaData, "types strict", this::isParamsFitByParamTypesStrict);
-			if (constructor == null) {
-				constructor = scan(declaredConstructors, metaData, "types shuffle", this::isParamsFitByParamTypesShuffle);
-				if (constructor == null) {
-					throw new ClassMappingException(
-						targetClass,
-						"Can't find appropriate constructor in:\n"
-							+ String.join("\n", toDescriptions(Arrays.asList(declaredConstructors)))
-					);
-				}
-			}
+		if (!scan(declaredConstructors, metaData, "name", new FitByNameConstructorChecker())
+			&& !scan(declaredConstructors, metaData, "types strict", new FitByParamTypesStrict())
+			&& !scan(declaredConstructors, metaData, "types shuffle", new FitByParamTypesShuffle())) {
+			throw new ClassMappingException(
+				targetClass,
+				"Can't find appropriate constructor in:\n"
+					+ String.join("\n", toDescriptions(Arrays.asList(declaredConstructors)))
+			);
 		}
-		return constructor;
 	}
 
-	private Constructor<?> scan(
+	private boolean scan(
 		Constructor<?>[] declaredConstructors, ResultSetMetaData metaData, String scanTypeDesc, ConstructorChecker constructorChecker
 	) throws SQLException {
 		ArrayList<Constructor<?>> constructors = new ArrayList<>();
 		for (Constructor<?> constructor : declaredConstructors) {
 			if (constructor.getParameterCount() > metaData.getColumnCount() // each constructor parameter should be mapped
-				&& constructorChecker.isConstructorFit(constructor.getParameters(), metaData)
-				) {
+				&& constructorChecker.isConstructorFit(constructor.getParameters(), metaData)) {
 				constructors.add(constructor);
 			}
 		}
 		if (constructors.size() == 0) {
-			return null;
+			return false;
 		}
 		if (constructors.size() > 1) {
 			throw new SqlException(
@@ -63,7 +56,8 @@ class ConstructorAccessor<T> extends Accessor<T> {
 					+ String.join(",\n", toDescriptions(constructors))
 			);
 		}
-		return constructors.get(0);
+		Constructor constructor = constructors.get(0);
+		return true;
 	}
 
 	private List<String> toDescriptions(Collection<Constructor<?>> constructors) {
@@ -92,46 +86,95 @@ class ConstructorAccessor<T> extends Accessor<T> {
 		return builder.toString();
 	}
 
-	private boolean isParamsFitByName(Parameter[] parameters, ResultSetMetaData metaData) throws SQLException {
-		for (Parameter parameter : parameters) {
-			if (!parameter.isNamePresent()) {
-				return false;
-			}
-			final String parameterName = parameter.getName();
-			boolean columnFound = false;
-			for (int columnIndex = metaData.getColumnCount(); columnIndex > 0; --columnIndex) {
-				if (isNamesMatch(metaData.getColumnName(columnIndex), parameterName)) {
-					// do not check here for ambiguous column name. This check will be made if this constructor will uniquely elected
-					columnFound = true;
-					break;
+	private class FitByNameConstructorChecker implements ConstructorChecker {
+		@Override
+		public boolean isConstructorFit(Parameter[] parameters, ResultSetMetaData metaData) throws SQLException {
+			for (Parameter parameter : parameters) {
+				if (!parameter.isNamePresent()) {
+					return false;
+				}
+				final String parameterName = parameter.getName();
+				boolean columnFound = false;
+				for (int columnIndex = metaData.getColumnCount(); columnIndex > 0; --columnIndex) {
+					if (isNamesMatch(metaData.getColumnName(columnIndex), parameterName)) {
+						// do not check here for ambiguous column name. This check will be made if this constructor will uniquely elected
+						columnFound = true;
+						break;
+					}
+				}
+				if (!columnFound) {
+					return false;
 				}
 			}
-			if (!columnFound) {
-				return false;
+			return true;
+		}
+
+		@Override
+		public void setupConvertors(Parameter[] params, ResultSetMetaData metaData) throws SQLException {
+			ArrayList<String> ambiguous = new ArrayList<>();
+			ArrayList<String> ambiguousGroups = new ArrayList<>();
+			ArrayList<String> undefinedConvertors = new ArrayList<>();
+			paramConvertors = new Convertor[params.length];
+			int convertorIndex = 0;
+			for (Parameter parameter : params) {
+				ambiguous.clear();
+				final String parameterName = parameter.getName();
+				for (int columnIndex = metaData.getColumnCount(); columnIndex > 0; --columnIndex) {
+					String columnName = metaData.getColumnName(columnIndex);
+					if (isNamesMatch(columnName, parameterName)) {
+						ambiguous.add(columnName);
+					}
+					if (ambiguous.size() > 1) {
+						ambiguousGroups.add(String.join(" and ", ambiguous));
+					} else {
+						int columnType = metaData.getColumnType(columnIndex);
+						Class paramclass = parameter.getClass();
+						Convertor convertor = findConvertor(metaData.getColumnType(columnIndex),parameter.getClass());
+						if (convertor == null ) {
+							undefinedConvertors.add(TypeNames.getAllJdbcTypeNames().get(columnType)+" "+columnName+" -> "+paramclass.getName()+" "+parameterName);
+						}
+						paramConvertors[convertorIndex] = convertor;
+					}
+				}
 			}
 		}
-		return true;
 	}
 
-	private boolean isParamsFitByParamTypesShuffle(Parameter[] parameters, ResultSetMetaData metaData) throws SQLException {
-		int index = 1;
-		for (Parameter parameter : parameters) {
-			if (!isConvertorAvailable(metaData.getColumnType(index), parameter.getType())) {
-				break;
+	private class FitByParamTypesShuffle implements ConstructorChecker {
+		@Override
+		public boolean isConstructorFit(Parameter[] params, ResultSetMetaData metaData) throws SQLException {
+			int index = 1;
+			for (Parameter parameter : params) {
+				if (!isConvertorAvailable(metaData.getColumnType(index), parameter.getType())) {
+					break;
+				}
+				++index;
 			}
-			++index;
+			return true;
 		}
-		return true;
+
+		@Override
+		public void setupConvertors(Parameter[] params, ResultSetMetaData metaData) throws SQLException {
+
+		}
 	}
 
-	private boolean isParamsFitByParamTypesStrict(Parameter[] parameters, ResultSetMetaData metaData) throws SQLException {
-		int index = 1;
-		for (Parameter parameter : parameters) {
-			if (!isConvertorAvailable(metaData.getColumnType(index), parameter.getType())) {
-				return false;
+	private class FitByParamTypesStrict implements ConstructorChecker {
+		@Override
+		public boolean isConstructorFit(Parameter[] params, ResultSetMetaData metaData) throws SQLException {
+			int index = 1;
+			for (Parameter parameter : params) {
+				if (!isConvertorAvailable(metaData.getColumnType(index), parameter.getType())) {
+					return false;
+				}
+				++index;
 			}
-			++index;
+			return true;
 		}
-		return true;
+
+		@Override
+		public void setupConvertors(Parameter[] params, ResultSetMetaData metaData) throws SQLException {
+
+		}
 	}
 }
