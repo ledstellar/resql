@@ -14,6 +14,7 @@ public abstract class DbManager {
 
 	DbManager( DataSource dataSource ) {
 		this.dataSource = dataSource;
+		accessorFactory = new AccessorFactory();
 	}
 
 	public abstract DbPipe getPipe( Logger log );

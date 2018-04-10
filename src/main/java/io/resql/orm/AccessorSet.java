@@ -13,7 +13,7 @@ class AccessorSet< KeyT, AccessorT > {
 		Accessor< AccessorT > accessor;
 		if ( index >= accessors.size() ) {
 			// this is new key
-			accessor = new Accessor<>(metaData, factory, targetClass);
+			accessor = Accessor.newInstance(metaData, factory, targetClass);
 			accessors.add( accessor );
 		} else {
 			accessor = accessors.get( index );
