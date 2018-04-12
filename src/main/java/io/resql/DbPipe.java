@@ -21,7 +21,7 @@ public interface DbPipe {
 	/**
 	 * Select type query. Select none, single or set of records from database and process it in some manner.
 	 * This function takes no argument constructor and uses direct access to class members (with any visibility).
-	 * When target class has no such constructors then use {@link #select(Processor, Class, CharSequence, Object...)}
+	 * When target class isExists no such constructors then use {@link #select(Processor, Class, CharSequence, Object...)}
 	 * function.
 	 * This method comparatively more performant constructor than alternative one.
 	 * @param processor specific resultset processor

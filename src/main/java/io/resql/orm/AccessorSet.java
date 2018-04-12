@@ -8,12 +8,13 @@ class AccessorSet< KeyT, AccessorT > {
 	private final AlmostConstantKeyedList< KeyT > keys = new AlmostConstantKeyedList<>();
 	private final ArrayList<Accessor<AccessorT>> accessors = new ArrayList<>();
 
-	Accessor<AccessorT> get(KeyT sql, ResultSetMetaData metaData, Supplier<AccessorT> factory, Class<AccessorT> targetClass) throws SQLException {
+	Accessor<AccessorT> get(KeyT sql, ResultSetMetaData metaData, Supplier<AccessorT> factory, Class<AccessorT> targetClass, ConvertorFactory convertorFactory) throws
+		SQLException {
 		int index = keys.indexOf( sql );
 		Accessor< AccessorT > accessor;
 		if ( index >= accessors.size() ) {
 			// this is new key
-			accessor = Accessor.newInstance(metaData, factory, targetClass);
+			accessor = Accessor.newInstance(metaData, factory, targetClass, convertorFactory);
 			accessors.add( accessor );
 		} else {
 			accessor = accessors.get( index );

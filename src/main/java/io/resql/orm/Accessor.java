@@ -24,11 +24,12 @@ public class Accessor<T> {
 	 * TODO: describe member resolution rules in details
 	 * @param targetClass ORM class. When set then access will scan ORM class for appropriate constructor
 	 */
-	static <T> Accessor<T> newInstance(ResultSetMetaData metaData, Supplier<T> factory, Class<T> targetClass) throws SQLException {
+	static <T> Accessor<T> newInstance(ResultSetMetaData metaData, Supplier<T> factory, Class<T> targetClass, ConvertorFactory convertorFactory) throws
+		SQLException {
 		if ( factory != null ) {
 			return new FieldDirectAccessor<>(metaData, factory);
 		} else {
-			return new ConstructorAccessor<>(metaData, targetClass);
+			return new ConstructorAccessor<>(metaData, targetClass, convertorFactory);
 		}
 	}
 
@@ -39,8 +40,6 @@ public class Accessor<T> {
 	Convertor findConvertor( int columnType, Class<?> fieldClass ) {
 		return null; 	// TODO: implement
 	}
-
-
 
 	String getColumnDescription( ResultSetMetaData metaData, int columnIndex ) throws SQLException {
 		return metaData.getColumnName( columnIndex ) + ' ' + metaData.getColumnType( columnIndex );	// TODO: implement more accurately
