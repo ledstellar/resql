@@ -1,20 +1,20 @@
 package io.resql.orm;
 
-import java.sql.*;
-import java.util.ArrayList;
+import java.sql.SQLException;
+import java.util.*;
 import java.util.function.Supplier;
 
 class AccessorSet< KeyT, AccessorT > {
 	private final AlmostConstantKeyedList< KeyT > keys = new AlmostConstantKeyedList<>();
 	private final ArrayList<Accessor<AccessorT>> accessors = new ArrayList<>();
 
-	Accessor<AccessorT> get(KeyT sql, ResultSetMetaData metaData, Supplier<AccessorT> factory, Class<AccessorT> targetClass, ConvertorFactory convertorFactory) throws
+	Accessor<AccessorT> get(KeyT sql, LinkedHashMap<String,Integer> resultSetColumnTypes, Supplier<AccessorT> factory, Class<AccessorT> targetClass, ConvertorFactory convertorFactory) throws
 		SQLException {
 		int index = keys.indexOf( sql );
 		Accessor< AccessorT > accessor;
 		if ( index >= accessors.size() ) {
 			// this is new key
-			accessor = Accessor.newInstance(metaData, factory, targetClass, convertorFactory);
+			accessor = Accessor.newInstance(resultSetColumnTypes, factory, targetClass, convertorFactory);
 			accessors.add( accessor );
 		} else {
 			accessor = accessors.get( index );

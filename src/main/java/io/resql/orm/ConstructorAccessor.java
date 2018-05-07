@@ -3,7 +3,7 @@ package io.resql.orm;
 import io.resql.SqlException;
 
 import java.lang.reflect.*;
-import java.sql.*;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -13,14 +13,12 @@ class ConstructorAccessor<T> extends Accessor<T> {
 
 	private static FitByNameConstructorChecker byNameChecker = new FitByNameConstructorChecker();
 	private static FitByParamTypesStrict byTypeStrictChecker = new FitByParamTypesStrict();
-	private static FitByParamTypesShuffle byTypesShuffleChecker = new FitByParamTypesShuffle();
 
 	@SuppressWarnings("unchecked")
-	ConstructorAccessor(ResultSetMetaData metaData, Class<T> targetClass, ConvertorFactory convertorFactory) throws SQLException {
+	ConstructorAccessor(LinkedHashMap<String, Integer> resultSetColumnTypes, Class<T> targetClass, ConvertorFactory convertorFactory) throws SQLException {
 		Constructor<?> declaredConstructors[] = targetClass.getDeclaredConstructors();
-		if (!scan(declaredConstructors, metaData, "name", byNameChecker, convertorFactory)
-			&& !scan(declaredConstructors, metaData, "types strict", byTypeStrictChecker, convertorFactory)
-			&& !scan(declaredConstructors, metaData, "types shuffle", byTypesShuffleChecker, convertorFactory)) {
+		if (!scan(declaredConstructors, resultSetColumnTypes, "name", byNameChecker, convertorFactory)
+			&& !scan(declaredConstructors, resultSetColumnTypes, "types strict", byTypeStrictChecker, convertorFactory)) {
 			throw new ClassMappingException(
 				targetClass,
 				"Can't find appropriate constructor in:\n"
@@ -32,14 +30,14 @@ class ConstructorAccessor<T> extends Accessor<T> {
 
 	@SuppressWarnings("unchecked")
 	boolean scan(
-		Constructor<?>[] declaredConstructors, ResultSetMetaData metaData,
+		Constructor<?>[] declaredConstructors, LinkedHashMap<String, Integer> resultSetColumnTypes,
 		String scanTypeDesc, ConstructorChecker constructorChecker,
 		ConvertorFactory convertorFactory
 	) throws SQLException {
 		ArrayList<Constructor<?>> constructors = new ArrayList<>();
 		for (Constructor<?> constructor : declaredConstructors) {
-			if (constructor.getParameterCount() > metaData.getColumnCount() // each constructor parameter should be mapped
-				&& constructorChecker.isConstructorFit(constructor.getParameters(), metaData, convertorFactory)) {
+			if (constructor.getParameterCount() > resultSetColumnTypes.size() // each constructor parameter should be mapped
+				&& constructorChecker.isConstructorFit(constructor.getParameters(), resultSetColumnTypes, convertorFactory)) {
 				constructors.add(constructor);
 			}
 		}
@@ -53,7 +51,7 @@ class ConstructorAccessor<T> extends Accessor<T> {
 			);
 		}
 		constructor = (Constructor<T>)constructors.get(0);
-		paramConvertors = constructorChecker.setupConvertors(constructor.getParameters(),metaData, convertorFactory);
+		paramConvertors = constructorChecker.setupConvertors(constructor.getParameters(),resultSetColumnTypes, convertorFactory);
 		return true;
 	}
 

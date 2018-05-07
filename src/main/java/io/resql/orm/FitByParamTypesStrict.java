@@ -2,22 +2,23 @@ package io.resql.orm;
 
 import java.lang.reflect.Parameter;
 import java.sql.*;
+import java.util.*;
 
 class FitByParamTypesStrict implements ConstructorChecker {
 	@Override
-	public boolean isConstructorFit(Parameter[] params, ResultSetMetaData metaData, ConvertorFactory convertorFactory) throws SQLException {
+	public boolean isConstructorFit(Parameter[] params, LinkedHashMap<String, Integer> resultSetColumnTypes, ConvertorFactory convertorFactory) throws SQLException {
 		int index = 1;
-		for (Parameter parameter : params) {
-			if (!convertorFactory.isExists(metaData.getColumnType(index), parameter.getType())) {
+		for (int columnSqlType : resultSetColumnTypes.values()) {
+			if (! convertorFactory.isExists(columnSqlType, params[index].getClass())) {
 				return false;
 			}
-			++index;
+			++ index;
 		}
 		return true;
 	}
 
 	@Override
-	public Convertor[] setupConvertors(Parameter[] params, ResultSetMetaData metaData, ConvertorFactory convertorFactory) throws SQLException {
+	public Convertor[] setupConvertors(Parameter[] params, LinkedHashMap<String, Integer> resultSetColumnTypes, ConvertorFactory convertorFactory) throws SQLException {
 		return null;    // TODO: implement
 	}
 }
