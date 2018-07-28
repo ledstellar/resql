@@ -6,6 +6,11 @@ import java.lang.reflect.Parameter;
 import java.sql.*;
 import java.util.*;
 
+/**
+ * Constructor to result set fit checker. This checker is only applied when constructor parameter names are available.
+ * To make constructor parameter names available in runtime one should supply -parameters option to the javac compiler
+ * when compiling module's source code.
+ */
 class FitByNameConstructorChecker implements ConstructorChecker {
 	@Override
 	public boolean isConstructorFit(Parameter[] parameters, LinkedHashMap<String,Integer> resultSetColumnTypes, ConvertorFactory convertorFactory) throws SQLException {

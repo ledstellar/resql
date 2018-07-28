@@ -1,6 +1,6 @@
 package io.resql;
 
-import io.resql.orm.Accessor;
+import io.resql.orm.*;
 import org.slf4j.Logger;
 
 import java.sql.*;
@@ -24,15 +24,6 @@ public class PostgresqlDbPipe implements DbPipe {
 	PostgresqlDbPipe(PostgresqlDbManager dbManager, Logger log) {
 		this.dbManager = dbManager;
 		this.log = log;
-	}
-
-	/**
-	 * Logger setter for Annotation Processors.
-	 *
-	 * @param logger
-	 */
-	public void setLogger(Logger logger) {
-		this.log = logger;
 	}
 
 	@Override
@@ -66,6 +57,13 @@ public class PostgresqlDbPipe implements DbPipe {
 		}
 	}
 
+	/**
+	 * Log SQL query in user format for debug purposes.
+	 * @param sql SQL query
+	 * @param params SQL query params
+	 * TODO: implement and remove warning suppression
+	 */
+	@SuppressWarnings("SameParameterValue")
 	private void debugSql(CharSequence sql, Object[] params) {
 		if (log.isDebugEnabled()) {
 			log.debug(getCallerSrcLine() + (params == null ? sql : injectParamsForDebug(sql, params)));
@@ -112,13 +110,13 @@ public class PostgresqlDbPipe implements DbPipe {
 			Statement statement = createStatementAndExecute(connection, sql, params, true);
 			ResultSet resultSet = statement.getResultSet();
 			Accessor accessor = dbManager.accessorFactory.createOrGet(sql, getColumnTypes(resultSet.getMetaData()), factory, targetClass);
-			return processor.process(new ResultSetSupplier<T>(resultSet, accessor));
-		} catch (SQLException sqle) {
+			return processor.process(new ResultSetSupplier<>(resultSet, accessor));
+		} catch (ClassMappingException | SQLException sqle) {
 			throw new SqlException("Error executing " + sql, sqle);    // TODO: implement detailed logging
 		}
 	}
 
-	LinkedHashMap<String, Integer> getColumnTypes(ResultSetMetaData metaData) throws SQLException {
+	private LinkedHashMap<String, Integer> getColumnTypes(ResultSetMetaData metaData) throws SQLException {
 		LinkedHashMap<String, Integer> map = new LinkedHashMap<>(metaData.getColumnCount());
 		for (int columnIndex = metaData.getColumnCount(); columnIndex > 0; -- columnIndex) {
 			map.put(metaData.getColumnName(columnIndex), metaData.getColumnType(columnIndex));

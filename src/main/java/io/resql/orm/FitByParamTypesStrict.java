@@ -4,6 +4,9 @@ import java.lang.reflect.Parameter;
 import java.sql.*;
 import java.util.*;
 
+/**
+ * This constructor finder is useful when use with implicit field selection and when there can be different matches
+ */
 class FitByParamTypesStrict implements ConstructorChecker {
 	@Override
 	public boolean isConstructorFit(Parameter[] params, LinkedHashMap<String, Integer> resultSetColumnTypes, ConvertorFactory convertorFactory) throws SQLException {

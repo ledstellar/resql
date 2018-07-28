@@ -1,6 +1,7 @@
 package io.resql.orm;
 
 import io.resql.SqlException;
+import io.resql.util.TypeNames;
 
 import java.lang.reflect.*;
 import java.sql.SQLException;
@@ -23,13 +24,15 @@ class ConstructorAccessor<T> extends Accessor<T> {
 				targetClass,
 				"Can't find appropriate constructor in:\n"
 					+ String.join("\n", toDescriptions(Arrays.asList(declaredConstructors)))
+					+ " for result set fields:\n"
+					+ toDescription(resultSetColumnTypes)
 			);
 		}
 		constructor.setAccessible(true);
 	}
 
 	@SuppressWarnings("unchecked")
-	boolean scan(
+	private boolean scan(
 		Constructor<?>[] declaredConstructors, LinkedHashMap<String, Integer> resultSetColumnTypes,
 		String scanTypeDesc, ConstructorChecker constructorChecker,
 		ConvertorFactory convertorFactory
@@ -55,11 +58,17 @@ class ConstructorAccessor<T> extends Accessor<T> {
 		return true;
 	}
 
-	List<String> toDescriptions(Collection<Constructor<?>> constructors) {
+	private String toDescription(LinkedHashMap<String, Integer> sqlFieldTypes) {
+		return sqlFieldTypes.entrySet().stream()
+			.map( entry -> entry.getKey() + ' ' + TypeNames.getName(entry.getValue()))
+			.collect(Collectors.joining(", "));
+	}
+
+	private List<String> toDescriptions(Collection<Constructor<?>> constructors) {
 		return constructors.stream().map(this::toDescription).collect(Collectors.toList());
 	}
 
-	String toDescription(Constructor<?> constructor) {
+	private String toDescription(Constructor<?> constructor) {
 		final String PARAM_SEPARATOR = ", ";
 		Class<?> declaringClass = constructor.getDeclaringClass();
 		StringBuilder builder = new StringBuilder(declaringClass.getPackageName())
