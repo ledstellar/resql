@@ -1,6 +1,7 @@
 package io.resql.orm;
 
 import io.resql.SqlException;
+import io.resql.orm.converters.Converter;
 
 import java.lang.reflect.Field;
 import java.sql.SQLException;
@@ -8,12 +9,12 @@ import java.util.*;
 import java.util.function.Supplier;
 
 class FieldDirectAccessor<T> extends Accessor<T> {
-	private Convertor[] convertors;
+	private Converter[] convertors;
 
 	FieldDirectAccessor(Map<String, Integer> resultSetColumnTypes, Supplier<T> factory) throws SQLException {
 		T ormInstance = factory.get();
 		Class<?> ormClass = ormInstance.getClass();
-		convertors = new Convertor[resultSetColumnTypes.size()];
+		convertors = new Converter[resultSetColumnTypes.size()];
 		ArrayList<String> unmappedColumns = null;
 		int columnIndex = 0;
 		for (Map.Entry<String, Integer> columnEntry : resultSetColumnTypes.entrySet()) {

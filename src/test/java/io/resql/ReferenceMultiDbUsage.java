@@ -1,7 +1,6 @@
 package io.resql;
 
 import com.zaxxer.hikari.HikariDataSource;
-import org.junit.*;
 import org.slf4j.*;
 
 import javax.sql.DataSource;
@@ -16,10 +15,4 @@ public class ReferenceMultiDbUsage {
 	static final DbPipe dbPipe = dbManager.getPipe(log);
 
 	public ReferenceMultiDbUsage() {}
-
-	@Ignore( "Next step" )
-	@Test
-	public void testSingleExtractor() {
-
-	}
 }

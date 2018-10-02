@@ -1,6 +1,7 @@
 package io.resql.orm;
 
 import io.resql.SqlException;
+import io.resql.orm.converters.Converter;
 import io.resql.util.TypeNames;
 
 import java.lang.reflect.*;
@@ -10,21 +11,21 @@ import java.util.stream.Collectors;
 
 class ConstructorAccessor<T> extends Accessor<T> {
 	private Constructor<T> constructor;
-	private Convertor[] paramConvertors;
+	private Converter[] paramConvertors;
 
 	private static FitByNameConstructorChecker byNameChecker = new FitByNameConstructorChecker();
 	private static FitByParamTypesStrict byTypeStrictChecker = new FitByParamTypesStrict();
 
 	@SuppressWarnings("unchecked")
-	ConstructorAccessor(LinkedHashMap<String, Integer> resultSetColumnTypes, Class<T> targetClass, ConvertorFactory convertorFactory) throws SQLException {
+	ConstructorAccessor(LinkedHashMap<String, Integer> resultSetColumnTypes, Class<T> targetClass, ConverterFactory converterFactory) throws SQLException {
 		Constructor<?> declaredConstructors[] = targetClass.getDeclaredConstructors();
-		if (!scan(declaredConstructors, resultSetColumnTypes, "name", byNameChecker, convertorFactory)
-			&& !scan(declaredConstructors, resultSetColumnTypes, "types strict", byTypeStrictChecker, convertorFactory)) {
+		if (!scan(declaredConstructors, resultSetColumnTypes, byNameChecker, converterFactory)
+			&& !scan(declaredConstructors, resultSetColumnTypes, byTypeStrictChecker, converterFactory)) {
 			throw new ClassMappingException(
 				targetClass,
-				"Can't find appropriate constructor in:\n"
-					+ String.join("\n", toDescriptions(Arrays.asList(declaredConstructors)))
-					+ " for result set fields:\n"
+				"Can't find appropriate constructor among:\n\t"
+					+ String.join("\n\t", toDescriptions(Arrays.asList(declaredConstructors)))
+					+ "\nfor result set fields:\n\t"
 					+ toDescription(resultSetColumnTypes)
 			);
 		}
@@ -34,27 +35,28 @@ class ConstructorAccessor<T> extends Accessor<T> {
 	@SuppressWarnings("unchecked")
 	private boolean scan(
 		Constructor<?>[] declaredConstructors, LinkedHashMap<String, Integer> resultSetColumnTypes,
-		String scanTypeDesc, ConstructorChecker constructorChecker,
-		ConvertorFactory convertorFactory
+		ConstructorChecker constructorChecker, ConverterFactory converterFactory
 	) throws SQLException {
 		ArrayList<Constructor<?>> constructors = new ArrayList<>();
 		for (Constructor<?> constructor : declaredConstructors) {
-			if (constructor.getParameterCount() > resultSetColumnTypes.size() // each constructor parameter should be mapped
-				&& constructorChecker.isConstructorFit(constructor.getParameters(), resultSetColumnTypes, convertorFactory)) {
+			if (constructor.getParameterCount() >= resultSetColumnTypes.size() // each constructor parameter should be mapped
+				&& constructorChecker.isConstructorFit(constructor.getParameters(), resultSetColumnTypes, converterFactory)) {
+				// collect all apropriateconstructors
 				constructors.add(constructor);
 			}
 		}
 		if (constructors.size() == 0) {
+			// no constructors fit with given check type
 			return false;
 		}
 		if (constructors.size() > 1) {
 			throw new SqlException(
-				"Ambigious constructors found while scanning for constructors " + scanTypeDesc + ":\n"
+				"Ambiguous constructors found while scanning for constructors " + constructorChecker.getDescription() + ":\n"
 					+ String.join(",\n", toDescriptions(constructors))
 			);
 		}
 		constructor = (Constructor<T>)constructors.get(0);
-		paramConvertors = constructorChecker.setupConvertors(constructor.getParameters(),resultSetColumnTypes, convertorFactory);
+		paramConvertors = constructorChecker.setupConvertors(constructor.getParameters(),resultSetColumnTypes, converterFactory);
 		return true;
 	}
 

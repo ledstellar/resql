@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 public class AccessorFactory {
 	/** Aggregate storage for all type accessors */
 	private HashMap<Object,AccessorSet<CharSequence,?>> accessorSets = new HashMap<>();
-	private ConvertorFactory convertorFactory = new ConvertorFactory();
+	private ConverterFactory converterFactory = new ConverterFactory();
 
 	/**
 	 * Create new accessor or find and return existing one. Either factory or targetClass parameters should be set (but not both).
@@ -28,6 +28,6 @@ public class AccessorFactory {
 			accessorSet = new AccessorSet<>();
 			accessorSets.put(key,accessorSet);
 		}
-		return  (Accessor<T>) accessorSet.get(sql, resultSetColumnTypes, factory, targetClass, convertorFactory);
+		return  (Accessor<T>) accessorSet.get(sql, resultSetColumnTypes, factory, targetClass, converterFactory);
 	}
 }

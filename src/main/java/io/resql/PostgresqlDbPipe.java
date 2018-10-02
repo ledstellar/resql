@@ -33,7 +33,7 @@ public class PostgresqlDbPipe implements DbPipe {
 			debugSql(sql, null);
 			return statement.getUpdateCount();
 		} catch (SQLException sqlException) {
-			throw new SqlException("Can't createOrGet update count", sqlException);    // TODO: implement detailed logging
+			throw new SqlException("Error executing " + getDebugRepresentation(sql, params), sqlException);    // TODO: implement detailed logging
 		}
 	}
 
@@ -66,8 +66,12 @@ public class PostgresqlDbPipe implements DbPipe {
 	@SuppressWarnings("SameParameterValue")
 	private void debugSql(CharSequence sql, Object[] params) {
 		if (log.isDebugEnabled()) {
-			log.debug(getCallerSrcLine() + (params == null ? sql : injectParamsForDebug(sql, params)));
+			log.debug(getDebugRepresentation(sql, params));
 		}
+	}
+
+	private String getDebugRepresentation(CharSequence sql, Object[] params) {
+		return getCallerSrcLine() + (params == null || params.length == 0 ? sql : injectParamsForDebug(sql, params));
 	}
 
 	private String getCallerSrcLine() {
@@ -118,7 +122,8 @@ public class PostgresqlDbPipe implements DbPipe {
 
 	private LinkedHashMap<String, Integer> getColumnTypes(ResultSetMetaData metaData) throws SQLException {
 		LinkedHashMap<String, Integer> map = new LinkedHashMap<>(metaData.getColumnCount());
-		for (int columnIndex = metaData.getColumnCount(); columnIndex > 0; -- columnIndex) {
+		int columnCount = metaData.getColumnCount();
+		for (int columnIndex = 1; columnIndex <= columnCount; ++ columnIndex) {
 			map.put(metaData.getColumnName(columnIndex), metaData.getColumnType(columnIndex));
 		}
 		return map;

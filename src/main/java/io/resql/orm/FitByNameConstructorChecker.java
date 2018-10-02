@@ -1,5 +1,6 @@
 package io.resql.orm;
 
+import io.resql.orm.converters.Converter;
 import io.resql.util.TypeNames;
 
 import java.lang.reflect.Parameter;
@@ -13,7 +14,12 @@ import java.util.*;
  */
 class FitByNameConstructorChecker implements ConstructorChecker {
 	@Override
-	public boolean isConstructorFit(Parameter[] parameters, LinkedHashMap<String,Integer> resultSetColumnTypes, ConvertorFactory convertorFactory) throws SQLException {
+	public String getDescription() {
+		return "by name";
+	}
+
+	@Override
+	public boolean isConstructorFit(Parameter[] parameters, LinkedHashMap<String,Integer> resultSetColumnTypes, ConverterFactory converterFactory) throws SQLException {
 		for (Parameter parameter : parameters) {
 			if (!parameter.isNamePresent()) {
 				return false;
@@ -35,11 +41,11 @@ class FitByNameConstructorChecker implements ConstructorChecker {
 	}
 
 	@Override
-	public Convertor[] setupConvertors(Parameter[] params, LinkedHashMap<String,Integer> resultSetColumnTypes, ConvertorFactory convertorFactory) throws SQLException {
+	public Converter[] setupConvertors(Parameter[] params, LinkedHashMap<String,Integer> resultSetColumnTypes, ConverterFactory converterFactory) throws SQLException {
 		ArrayList<String> ambiguous = new ArrayList<>();
 		ArrayList<String> ambiguousGroups = new ArrayList<>();
 		ArrayList<String> undefinedConvertors = new ArrayList<>();
-		Convertor[] paramConvertors = new Convertor[params.length];
+		Converter[] paramConvertors = new Converter[params.length];
 		int convertorIndex = 0;
 		for (Parameter parameter : params) {
 			ambiguous.clear();
@@ -54,7 +60,7 @@ class FitByNameConstructorChecker implements ConstructorChecker {
 				} else {
 					int columnType = columnEntry.getValue();
 					Class paramclass = parameter.getClass();
-					Convertor convertor = convertorFactory.get(columnType,parameter.getClass());
+					Converter convertor = converterFactory.get(columnType,parameter.getClass());
 					if (convertor == null ) {
 						undefinedConvertors.add(TypeNames.getAllJdbcTypeNames().get(columnType)+" "+columnName+" -> "+paramclass.getName()+" "+parameterName);
 					}

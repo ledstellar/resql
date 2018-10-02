@@ -1,20 +1,21 @@
-package io.resql.orm;
+package io.resql.orm.converters;
 
 import java.lang.reflect.Field;
 import java.sql.*;
 
-public interface Convertor< FieldType > {
+/** Converter from database to object field data types and vice versa */
+public interface Converter<OrmFieldType> {
 	/**
-	 * State DB column type this convertor can be applied to
+	 * DB column type this converter can be applied to
 	 * @return SQLType constant of database column type
 	 */
 	int getDbColumnType();
 
 	/**
-	 * State ORM class field type this convertor can be applied to
+	 * ORM class field type this converter can be applied to
 	 * @return ORM field class
 	 */
-	Class< FieldType > getFieldType();
+	Class<OrmFieldType> getFieldType();
 
 	/**
 	 * Convert value from resultset to class field value

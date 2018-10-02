@@ -1,5 +1,6 @@
 package io.resql.orm;
 
+import io.resql.orm.converters.Converter;
 import org.slf4j.*;
 
 import java.sql.*;
@@ -28,16 +29,16 @@ public class Accessor<T> {
 	 *                             TODO: describe member resolution rules in details
 	 * @param targetClass          ORM class. When set then access will scan ORM class for appropriate constructor
 	 */
-	static <T> Accessor<T> newInstance(LinkedHashMap<String, Integer> resultSetColumnTypes, Supplier<T> factory, Class<T> targetClass, ConvertorFactory convertorFactory) throws
+	static <T> Accessor<T> newInstance(LinkedHashMap<String, Integer> resultSetColumnTypes, Supplier<T> factory, Class<T> targetClass, ConverterFactory converterFactory) throws
 		SQLException {
 		if (factory != null) {
 			return new FieldDirectAccessor<>(resultSetColumnTypes, factory);
 		} else {
-			return new ConstructorAccessor<>(resultSetColumnTypes, targetClass, convertorFactory);
+			return new ConstructorAccessor<>(resultSetColumnTypes, targetClass, converterFactory);
 		}
 	}
 
-	Convertor findConvertor(int columnType, Class<?> fieldClass) {
+	Converter findConvertor(int columnType, Class<?> fieldClass) {
 		return null;    // TODO: implement
 	}
 

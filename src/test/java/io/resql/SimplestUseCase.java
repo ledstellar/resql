@@ -1,44 +1,65 @@
 package io.resql;
 
 import com.zaxxer.hikari.*;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 import org.slf4j.*;
 
-import java.lang.reflect.Constructor;
-import java.util.function.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Typical use case of reSql without any DI or something
  */
-public class SimplestUseCase {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class SimplestUseCase {
 	private static final Logger log = LoggerFactory.getLogger( SimplestUseCase.class );
 
-	public SimplestUseCase() {}
+	private PostgresqlDbPipe pipe;
 
-	@Test
-	public void testSimplestUseCase() {
+	@BeforeAll
+	void initTable() {
+		assertEquals(
+			0, pipe.execute("CREATE TABLE IF NOT EXISTS users(id SERIAL, name TEXT)"),
+			"No records must be processed by DDL queries"
+		);
+	}
+
+	SimplestUseCase() {
 		HikariConfig config = new HikariConfig("/simple_use_case_hikari.properties" );
 		HikariDataSource dataSource = new HikariDataSource( config );
 		PostgresqlDbManager dbManager = new PostgresqlDbManager( dataSource );
-		PostgresqlDbPipe pipe = dbManager.getPipe( log );
-		Assert.assertEquals(
-			"No records must be processed by DDL queries", 0,
-			pipe.execute("CREATE TABLE IF NOT EXISTS users(id SERIAL, name TEXT)" )
+		pipe = dbManager.getPipe( log );
+	}
+
+	@Test
+	void testWrongFieldOrder() {
+		String sql = "SELECT name, id FROM users WHERE id=?";
+		SqlException sqle = assertThrows(
+			SqlException.class, () -> { pipe.select(As::single, User.class, sql, 1); },
+			"Wrong field sequence check"
 		);
-		User user = pipe.select(As::single, User.class,"SELECT * FROM users WHERE id=?", 1);
-		Assert.assertEquals("Users should be the same",user,new  User(1, "User Name"));
-		Assert.assertEquals(
-			"No records must be processed by DDL queries", 0,
-			pipe.execute("DROP TABLE test_table" )
+		assertEquals("Error executing " + sql, sqle.getMessage());
+		Throwable cause = sqle.getCause();
+		assertEquals(
+			"Can't find appropriate constructor among:\n" +
+				"\tio.resqlUserio.resql.User()\n" +
+				"\tio.resqlUserio.resql.User(int, java.lang.String)\n" +
+				"for result set fields:\n" +
+				"\tname VARCHAR, id INTEGER",
+			cause.getMessage()
 		);
 	}
 
 	@Test
-	public void testShortestUseCase() {
-		new PostgresqlDbManager(
-			new HikariDataSource(
-				new HikariConfig("/simple_use_case_hikari.properties" )
-			)
-		).getPipe( log ).execute( "CREATE TABLE IF NOT EXISTS test_table( id SERIAL, text_data TEXT )" );
+	void testSelectSingle() {
+		User user = pipe.select(As::single, User.class, "SELECT id, name FROM users WHERE id=?", 1 );
+ 		assertEquals(user, new User(1, "User Name"),"Users should be the same");
+	}
+
+	@AfterAll
+	void dropTable() {
+		assertEquals(
+			0, pipe.execute("DROP TABLE users" ),
+			"No records must be processed by DDL queries"
+		);
 	}
 }
