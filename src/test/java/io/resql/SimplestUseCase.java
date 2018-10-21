@@ -21,24 +21,39 @@ class SimplestUseCase {
 			0, pipe.execute("CREATE TABLE IF NOT EXISTS users(id SERIAL, name TEXT)"),
 			"No records must be processed by DDL queries"
 		);
+		fillTableUp();
 	}
 
 	SimplestUseCase() {
 		HikariConfig config = new HikariConfig("/simple_use_case_hikari.properties" );
 		HikariDataSource dataSource = new HikariDataSource( config );
 		PostgresqlDbManager dbManager = new PostgresqlDbManager( dataSource );
-		pipe = dbManager.getPipe( log );
+		pipe = dbManager.getPipe(log);
+	}
+
+	private void fillTableUp() {
+		pipe.batch(
+			Query::insert,
+			batch -> {
+				User user = new User();
+				for (int id = 1; id < 1000; ++ id) {
+					user.id = id;
+					user.name = "Имя пользователя " + id;
+					batch.add(user);
+				}
+			}
+		);
 	}
 
 	@Test
 	void testWrongFieldOrder() {
-		String sql = "SELECT name, id FROM users WHERE id=?";
-		SqlException sqle = assertThrows(
-			SqlException.class, () -> { pipe.select(As::single, User.class, sql, 1); },
+		var sql = "SELECT name, id FROM users WHERE id=?";
+		var sqlException = assertThrows(
+			SqlException.class, () -> pipe.select(As::single, User.class, sql, 1),
 			"Wrong field sequence check"
 		);
-		assertEquals("Error executing " + sql, sqle.getMessage());
-		Throwable cause = sqle.getCause();
+		assertEquals("Error executing " + sql, sqlException.getMessage());
+		Throwable cause = sqlException.getCause();
 		assertEquals(
 			"Can't find appropriate constructor among:\n" +
 				"\tio.resqlUserio.resql.User()\n" +

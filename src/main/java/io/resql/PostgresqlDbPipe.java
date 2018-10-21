@@ -1,6 +1,6 @@
 package io.resql;
 
-import io.resql.orm.*;
+  import io.resql.orm.*;
 import org.slf4j.Logger;
 
 import java.sql.*;
@@ -137,5 +137,21 @@ public class PostgresqlDbPipe implements DbPipe {
 	@Override
 	public <T, ResultT> ResultT select(Processor<T, ResultT> processor, Class<T> targetClass, CharSequence sql, Object... params) {
 		return internalSelect(processor, null, targetClass, sql, params);
+	}
+
+	@Override
+	public <Type> void batch(String sql, Batcher<Type> batcherImpl) {
+		//  TODO: implement
+	}
+
+	@Override
+	public <Type> void batch(QueryBuilder<Type> queryBuilder, Batcher<Type> batcherImpl) {
+		//  TODO: implement
+	}
+
+	@Override
+	public ResultSetMetaData getMetaData(String query) {
+		// TODO: implement
+		return null;
 	}
 }

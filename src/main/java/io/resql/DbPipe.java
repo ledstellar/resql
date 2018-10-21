@@ -1,10 +1,7 @@
 package io.resql;
 
-import java.util.Collection;
-import java.util.function.*;
-import java.util.stream.IntStream;
-import java.util.stream.LongStream;
-import java.util.stream.Stream;
+import java.sql.ResultSetMetaData;
+import java.util.function.Supplier;
 
 /**
  * Database connection(s) tied to particular class.
@@ -46,4 +43,10 @@ public interface DbPipe {
 	 * @param <ResultT> call result type
 	 */
 	<T,ResultT> ResultT select( Processor<T,ResultT> processor, Class<T> targetClass, CharSequence sql, Object... params);
+
+ 	<Type> void batch(String sql, Batcher<Type> batcherImpl);
+
+	<Type> void batch(QueryBuilder<Type> sqlBuilder, Batcher<Type> batcherImpl);
+
+	ResultSetMetaData getMetaData(String query);
 }

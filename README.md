@@ -1,5 +1,10 @@
-# resql
-JDBC wrapper
+# ReSQL
+Lightweight streaming ORM for developers familiar with SQL
+
+## Quick start
+Main classes
+- DbManager - incapsulates connection to database
+- DbPipe - incapsulates connection to database and logger implementation
 
 ### Constructor matching
 #### By names
@@ -11,3 +16,4 @@ Note, that parameter names unavailable in compiled classes by default.
 To enable use -parameters switch in class compilation.
 #### By types
 Each constructor parameter must have convertor from related query result column  
+jkj		dkdsdsjdksjd
