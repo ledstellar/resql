@@ -4,21 +4,18 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Supplier;
 
-class AccessorSet< KeyT, AccessorT > {
-	private final AlmostConstantKeyedList< KeyT > keys = new AlmostConstantKeyedList<>();
-	private final ArrayList<Accessor<AccessorT>> accessors = new ArrayList<>();
+class AccessorSet<AccessorT> {
+	private final HashMap<CharSequence, Accessor> accessors = new HashMap<>();
 
-	Accessor<AccessorT> get(KeyT sql, LinkedHashMap<String,Integer> resultSetColumnTypes, Supplier<AccessorT> factory, Class<AccessorT> targetClass, ConverterFactory converterFactory) throws
+	Accessor<AccessorT> get(CharSequence sql, LinkedHashMap<String,String> resultSetColumnTypes, Supplier<AccessorT> factory, Class<AccessorT> targetClass,
+	                        ConverterFactory converterFactory) throws
 		SQLException {
-		int index = keys.indexOf( sql );
-		Accessor< AccessorT > accessor;
-		if ( index >= accessors.size() ) {
-			// this is new key
+		Accessor accessor = accessors.get(sql);
+		if (accessor == null) {
 			accessor = Accessor.newInstance(resultSetColumnTypes, factory, targetClass, converterFactory);
-			accessors.add( accessor );
-		} else {
-			accessor = accessors.get( index );
+			accessors.put(sql, accessor);
 		}
+		//noinspection unchecked
 		return accessor;
 	}
 }

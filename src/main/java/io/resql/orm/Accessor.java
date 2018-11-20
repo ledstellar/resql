@@ -1,10 +1,14 @@
 package io.resql.orm;
 
+import io.resql.SqlException;
 import io.resql.orm.converters.Converter;
+import io.resql.util.TypeNames;
+import org.reflections.Reflections;
 import org.slf4j.*;
 
+import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -14,22 +18,49 @@ import java.util.function.Supplier;
  *
  * @param <T> ORM class type
  */
-public class Accessor<T> {
+public abstract class Accessor<T> {
 	private static final Logger log = LoggerFactory.getLogger(Accessor.class);
 
-	boolean isConvertorAvailable(int columnType, Class<?> fieldClass) {
-		return findConvertor(columnType, fieldClass) != null;
+	boolean isConvertorAvailable(String columnTypeName, Class<?> fieldClass) {
+		return findConvertor(columnTypeName, fieldClass) != null;
+	}
+
+	static HashMap<String, HashMap<Class<?>, Converter>> converters = new HashMap<>();
+
+	static {
+		loadConverters();
+	}
+
+	private static void loadConverters() {
+		Reflections reflections = new Reflections("io.resql.orm.converters");
+		for(Class<? extends Converter> converterClass : reflections.getSubTypesOf(Converter.class)) {
+			try {
+				Converter converter = converterClass.getConstructor().newInstance();
+				String dbColumnType = converter.getDbColumnType();
+				var converterMap = converters.computeIfAbsent(dbColumnType, key -> new HashMap<>());
+				Class<?> fieldType = converter.getFieldType();
+				if (converterMap.containsKey(fieldType)) {
+					log.error("Converters {} and {} have the same convertion types", converter, converterMap.get(fieldType));
+				} else {
+					converterMap.put(fieldType, converter);
+				}
+			} catch (Exception e) {
+				log.error("Cannot instantiate converter of class " + converterClass, e);
+			}
+		}
+
 	}
 
 	/**
 	 * Create new ORM class access implementation. Use either factory or targetClass param
 	 *
-	 * @param resultSetColumnTypes metadata of executed select query
+	 * @param resultSetColumnTypes column name to SQL column type map
 	 * @param factory              factory for ORM class. When set then accessor will use direct access to class' members.
 	 *                             TODO: describe member resolution rules in details
 	 * @param targetClass          ORM class. When set then access will scan ORM class for appropriate constructor
 	 */
-	static <T> Accessor<T> newInstance(LinkedHashMap<String, Integer> resultSetColumnTypes, Supplier<T> factory, Class<T> targetClass, ConverterFactory converterFactory) throws
+	static <T> Accessor<T> newInstance(LinkedHashMap<String, String> resultSetColumnTypes, Supplier<T> factory, Class<T> targetClass,
+	                                   ConverterFactory converterFactory) throws
 		SQLException {
 		if (factory != null) {
 			return new FieldDirectAccessor<>(resultSetColumnTypes, factory);
@@ -38,16 +69,27 @@ public class Accessor<T> {
 		}
 	}
 
-	Converter findConvertor(int columnType, Class<?> fieldClass) {
-		return null;    // TODO: implement
+	Converter findConvertor(String columnType, Class<?> fieldClass) {
+		log.debug("Scan for converter from {} to {}", columnType, fieldClass.getName());
+		var converterMap = converters.get(columnType);
+		if (converterMap == null) {
+			throw new RuntimeException("No converters defined for DB column type " + columnType); // TODO: make specific exception
+		}
+		var converter = converterMap.get(fieldClass);
+		if (converter == null) {
+			// TODO: make specific exception (as above) and show more details in description (already defined class types for example)
+			throw new RuntimeException("Some converters defined for DB column type " + columnType + ", but not for class " + fieldClass);
+		}
+		return converter;
 	}
 
-	String getColumnDescription(String columnName, int sqlColumnType) throws SQLException {
+	String getColumnDescription(String columnName, String sqlColumnType) throws SQLException {
 		return columnName + ' ' + sqlColumnType;    // TODO: implement more accurately
 	}
 
 	static boolean isNamesMatch(String columnName, String fieldName) {
-		return columnName.equals(fieldName);    // TODO: implement more smart algorithm and make it customizable
+		// TODO: implement more smart algorithm and make it customizable
+		return columnName.equals(fieldName);
 	}
 
 	/**
@@ -57,8 +99,5 @@ public class Accessor<T> {
 	 * @param resultSet opened resultset to init ORM class instance
 	 * @return initialized ORM class instance
 	 */
-	T get(ResultSet resultSet) {
-		// TODO: implement
-		return null;
-	}
+	public abstract T get(ResultSet resultSet);
 }

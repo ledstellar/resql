@@ -2,6 +2,7 @@ package io.resql;
 
 import java.sql.ResultSetMetaData;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * Database connection(s) tied to particular class.
@@ -47,6 +48,8 @@ public interface DbPipe {
  	<Type> void batch(String sql, Batcher<Type> batcherImpl);
 
 	<Type> void batch(QueryBuilder<Type> sqlBuilder, Batcher<Type> batcherImpl);
+
+	<OrmType> Stream<OrmType> select(Supplier<OrmType> factory, CharSequence sql, Object... params);
 
 	ResultSetMetaData getMetaData(String query);
 }

@@ -10,12 +10,12 @@ public class ConverterFactory {
 
 	}
 
-	public Converter get(int sqlType, Class<?> dataFieldClass) {
+	public Converter get(String sqlType, Class<?> dataFieldClass) {
 		// TODO: implement
 		return null;
 	}
 
-	public boolean isExists(int sqlType, Class<?> dataFieldClass) {
+	public boolean isExists(String sqlType, Class<?> dataFieldClass) {
 		// TODO: implement
 		return false;
 	}

@@ -1,6 +1,6 @@
 package io.resql.orm;
 
-import io.resql.orm.converters.Converter;
+import io.resql.orm.converters.*;
 
 import java.lang.reflect.Parameter;
 import java.sql.*;
@@ -18,9 +18,9 @@ class FitByParamTypesStrict implements ConstructorChecker {
 	}
 
 	@Override
-	public boolean isConstructorFit(Parameter[] params, LinkedHashMap<String, Integer> resultSetColumnTypes, ConverterFactory converterFactory) throws SQLException {
+	public boolean isConstructorFit(Parameter[] params, LinkedHashMap<String, String> resultSetColumnTypes, ConverterFactory converterFactory) throws SQLException {
 		int index = 1;
-		for (int columnSqlType : resultSetColumnTypes.values()) {
+		for (String columnSqlType : resultSetColumnTypes.values()) {
 			if (! converterFactory.isExists(columnSqlType, params[index].getClass())) {
 				return false;
 			}
@@ -30,7 +30,7 @@ class FitByParamTypesStrict implements ConstructorChecker {
 	}
 
 	@Override
-	public Converter[] setupConvertors(Parameter[] params, LinkedHashMap<String, Integer> resultSetColumnTypes, ConverterFactory converterFactory) throws SQLException {
+	public FromDbConverter[] setupConvertors(Parameter[] params, LinkedHashMap<String, String> resultSetColumnTypes, ConverterFactory converterFactory) throws SQLException {
 		return null;    // TODO: implement
 	}
 }

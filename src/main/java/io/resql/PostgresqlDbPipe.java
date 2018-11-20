@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import java.sql.*;
 import java.util.*;
 import java.util.function.Supplier;
+  import java.util.stream.*;
 
 public class PostgresqlDbPipe implements DbPipe {
 	private PostgresqlDbManager dbManager;
@@ -120,11 +121,11 @@ public class PostgresqlDbPipe implements DbPipe {
 		}
 	}
 
-	private LinkedHashMap<String, Integer> getColumnTypes(ResultSetMetaData metaData) throws SQLException {
-		LinkedHashMap<String, Integer> map = new LinkedHashMap<>(metaData.getColumnCount());
+	private LinkedHashMap<String, String> getColumnTypes(ResultSetMetaData metaData) throws SQLException {
+		LinkedHashMap<String, String> map = new LinkedHashMap<>(metaData.getColumnCount());
 		int columnCount = metaData.getColumnCount();
 		for (int columnIndex = 1; columnIndex <= columnCount; ++ columnIndex) {
-			map.put(metaData.getColumnName(columnIndex), metaData.getColumnType(columnIndex));
+			map.put(metaData.getColumnName(columnIndex), metaData.getColumnTypeName(columnIndex));
 		}
 		return map;
 	}
@@ -153,5 +154,20 @@ public class PostgresqlDbPipe implements DbPipe {
 	public ResultSetMetaData getMetaData(String query) {
 		// TODO: implement
 		return null;
+	}
+
+	@Override
+	public <OrmType> Stream<OrmType> select(Supplier<OrmType> factory, CharSequence sql, Object... params) {
+		Connection connection;
+		ResultSet resultSet;
+		try {
+			var connection = dbManager.getConnection();
+			var statement = createStatementAndExecute(connection, sql, params, true);
+			var resultSet = statement.getResultSet();
+		} catch (ClassMappingException | SQLException sqle) {
+			throw new SqlException("Error executing " + sql, sqle);    // TODO: implement detailed logging
+		}
+		Accessor<OrmType> accessor = dbManager.accessorFactory.createOrGet(sql, getColumnTypes(resultSet.getMetaData()), factory, null);
+		return StreamSupport.stream(new OrmResultSetSpliterator<>(connection, resultSet, accessor), false);
 	}
 }

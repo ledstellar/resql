@@ -1,6 +1,6 @@
 package io.resql.orm;
 
-import io.resql.orm.converters.Converter;
+import io.resql.orm.converters.*;
 import io.resql.util.TypeNames;
 
 import java.lang.reflect.Parameter;
@@ -19,7 +19,7 @@ class FitByNameConstructorChecker implements ConstructorChecker {
 	}
 
 	@Override
-	public boolean isConstructorFit(Parameter[] parameters, LinkedHashMap<String,Integer> resultSetColumnTypes, ConverterFactory converterFactory) throws SQLException {
+	public boolean isConstructorFit(Parameter[] parameters, LinkedHashMap<String,String> resultSetColumnTypes, ConverterFactory converterFactory) throws SQLException {
 		for (Parameter parameter : parameters) {
 			if (!parameter.isNamePresent()) {
 				return false;
@@ -41,16 +41,17 @@ class FitByNameConstructorChecker implements ConstructorChecker {
 	}
 
 	@Override
-	public Converter[] setupConvertors(Parameter[] params, LinkedHashMap<String,Integer> resultSetColumnTypes, ConverterFactory converterFactory) throws SQLException {
+	public FromDbConverter[] setupConvertors(Parameter[] params, LinkedHashMap<String,String> resultSetColumnTypes, ConverterFactory converterFactory) throws SQLException {
 		ArrayList<String> ambiguous = new ArrayList<>();
 		ArrayList<String> ambiguousGroups = new ArrayList<>();
 		ArrayList<String> undefinedConvertors = new ArrayList<>();
-		Converter[] paramConvertors = new Converter[params.length];
+		FromDbConverter[] paramConvertors = new FromDbConverter[params.length];
 		int convertorIndex = 0;
 		for (Parameter parameter : params) {
 			ambiguous.clear();
 			final String parameterName = parameter.getName();
-			for (Map.Entry<String,Integer> columnEntry : resultSetColumnTypes.entrySet()) {
+			int columnIndex = 1;
+			for (Map.Entry<String,String> columnEntry : resultSetColumnTypes.entrySet()) {
 				String columnName = columnEntry.getKey();
 				if (Accessor.isNamesMatch(columnName, parameterName)) {
 					ambiguous.add(columnName);
@@ -58,13 +59,13 @@ class FitByNameConstructorChecker implements ConstructorChecker {
 				if (ambiguous.size() > 1) {
 					ambiguousGroups.add(String.join(" and ", ambiguous));
 				} else {
-					int columnType = columnEntry.getValue();
+					String columnType = columnEntry.getValue();
 					Class paramclass = parameter.getClass();
-					Converter convertor = converterFactory.get(columnType,parameter.getClass());
-					if (convertor == null ) {
+					Converter converter = converterFactory.get(columnType,parameter.getClass());
+					if (converter == null ) {
 						undefinedConvertors.add(TypeNames.getAllJdbcTypeNames().get(columnType)+" "+columnName+" -> "+paramclass.getName()+" "+parameterName);
 					}
-					paramConvertors[convertorIndex] = convertor;
+					paramConvertors[convertorIndex] = null; // FIXME: need another way of creating constructor parameters
 				}
 			}
 		}
