@@ -22,7 +22,7 @@ public class Float8DoubleConverter implements Converter {
 
 		@Override
 		public void convert(ResultSet rs, Object classInstance) throws SQLException, IllegalAccessException {
-			field.set(rs.getDouble(columnIndex), classInstance);
+			field.set(classInstance, rs.getDouble(columnIndex));
 		}
 	}
 

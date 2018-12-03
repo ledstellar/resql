@@ -12,10 +12,10 @@ public abstract class DbManager {
 	DataSource dataSource;
 	AccessorFactory accessorFactory;
 
-	DbManager( DataSource dataSource ) {
+	DbManager(DataSource dataSource) {
 		this.dataSource = dataSource;
 		accessorFactory = new AccessorFactory();
 	}
 
-	public abstract DbPipe getPipe( Logger log );
+	public abstract DbPipe getPipe(Logger log);
 }

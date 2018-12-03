@@ -11,12 +11,8 @@ public class PostgresqlDbManager extends DbManager {
 		super( dataSource );
 	}
 
-	Connection getConnection() throws SQLException {
-		return dataSource.getConnection();
-	}
-
 	@Override
-	public PostgresqlDbPipe getPipe( Logger log) {
-		return new PostgresqlDbPipe(this, log);
+	public PostgresqlDbPipe getPipe(Logger log) {
+		return new PostgresqlDbPipe(dataSource, accessorFactory, log);
 	}
 }

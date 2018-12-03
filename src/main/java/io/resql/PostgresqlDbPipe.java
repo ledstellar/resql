@@ -1,36 +1,32 @@
 package io.resql;
 
   import io.resql.orm.*;
-import org.slf4j.Logger;
+  import io.resql.orm.stream.SqlStream;
+  import org.slf4j.Logger;
 
-import java.sql.*;
+  import javax.sql.DataSource;
+  import java.sql.*;
 import java.util.*;
 import java.util.function.Supplier;
   import java.util.stream.*;
 
 public class PostgresqlDbPipe implements DbPipe {
-	private PostgresqlDbManager dbManager;
 	private Logger log;
+	private AccessorFactory accessorFactory;
+	private DataSource dataSource;
 
-	/**
-	 * Constructor for autowiring. No logger mentioned in parameters.
-	 * It should be set up later by Annotation Processor.
-	 *
-	 * @param dbManager DbManager instance
-	 */
-	PostgresqlDbPipe(PostgresqlDbManager dbManager) {
-		this(dbManager, null);
-	}
-
-	PostgresqlDbPipe(PostgresqlDbManager dbManager, Logger log) {
-		this.dbManager = dbManager;
+	PostgresqlDbPipe(DataSource dataSource, AccessorFactory accessorFactory, Logger log) {
+		this.dataSource = dataSource;
+		this.accessorFactory = accessorFactory;
 		this.log = log;
 	}
 
 	@Override
 	public int execute(CharSequence sql, Object... params) {
-		try (Connection connection = dbManager.getConnection()) {
-			Statement statement = createStatementAndExecute(connection, sql.toString(), params, false);
+		try (
+			Connection connection = dataSource.getConnection();
+			Statement statement = createStatementAndExecute(connection, sql, params, false)
+		) {
 			debugSql(sql, null);
 			return statement.getUpdateCount();
 		} catch (SQLException sqlException) {
@@ -87,7 +83,7 @@ public class PostgresqlDbPipe implements DbPipe {
 		return "/*(" + frame.getFileName() + ':' + frame.getLineNumber() + ")*/ ";
 	}
 
-	private void fillStatementWithParams(PreparedStatement statement, Object[] params) throws SQLException {
+	public static void fillStatementWithParams(PreparedStatement statement, Object[] params) throws SQLException {
 		int index = 1;
 		for (Object param : params) {
 			statement.setObject(index++, param);
@@ -110,34 +106,13 @@ public class PostgresqlDbPipe implements DbPipe {
 		}
 	}
 
-	private <T, ResultT> ResultT internalSelect(Processor<T, ResultT> processor, Supplier<T> factory, Class<T> targetClass, CharSequence sql, Object... params) {
-		try (Connection connection = dbManager.getConnection()) {
-			Statement statement = createStatementAndExecute(connection, sql, params, true);
-			ResultSet resultSet = statement.getResultSet();
-			Accessor accessor = dbManager.accessorFactory.createOrGet(sql, getColumnTypes(resultSet.getMetaData()), factory, targetClass);
-			return processor.process(new ResultSetSupplier<>(resultSet, accessor));
-		} catch (ClassMappingException | SQLException sqle) {
-			throw new SqlException("Error executing " + sql, sqle);    // TODO: implement detailed logging
-		}
-	}
-
-	private LinkedHashMap<String, String> getColumnTypes(ResultSetMetaData metaData) throws SQLException {
+	public static LinkedHashMap<String, String> getColumnTypes(ResultSetMetaData metaData) throws SQLException {
 		LinkedHashMap<String, String> map = new LinkedHashMap<>(metaData.getColumnCount());
 		int columnCount = metaData.getColumnCount();
 		for (int columnIndex = 1; columnIndex <= columnCount; ++ columnIndex) {
 			map.put(metaData.getColumnName(columnIndex), metaData.getColumnTypeName(columnIndex));
 		}
 		return map;
-	}
-
-	@Override
-	public <T, ResultT> ResultT select(Processor<T, ResultT> processor, Supplier<T> factory, CharSequence sql, Object... params) {
-		return internalSelect(processor, factory, null, sql, params);
-	}
-
-	@Override
-	public <T, ResultT> ResultT select(Processor<T, ResultT> processor, Class<T> targetClass, CharSequence sql, Object... params) {
-		return internalSelect(processor, null, targetClass, sql, params);
 	}
 
 	@Override
@@ -158,16 +133,6 @@ public class PostgresqlDbPipe implements DbPipe {
 
 	@Override
 	public <OrmType> Stream<OrmType> select(Supplier<OrmType> factory, CharSequence sql, Object... params) {
-		Connection connection;
-		ResultSet resultSet;
-		try {
-			var connection = dbManager.getConnection();
-			var statement = createStatementAndExecute(connection, sql, params, true);
-			var resultSet = statement.getResultSet();
-		} catch (ClassMappingException | SQLException sqle) {
-			throw new SqlException("Error executing " + sql, sqle);    // TODO: implement detailed logging
-		}
-		Accessor<OrmType> accessor = dbManager.accessorFactory.createOrGet(sql, getColumnTypes(resultSet.getMetaData()), factory, null);
-		return StreamSupport.stream(new OrmResultSetSpliterator<>(connection, resultSet, accessor), false);
+		return new SqlStream<>(dataSource, accessorFactory, log, sql, params, factory);
 	}
 }

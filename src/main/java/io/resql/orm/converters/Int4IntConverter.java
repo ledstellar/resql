@@ -22,7 +22,7 @@ public class Int4IntConverter implements Converter {
 
 		@Override
 		public void convert(ResultSet rs, Object classInstance) throws SQLException, IllegalAccessException {
-			field.set(rs.getInt(columnIndex), classInstance);
+			field.set(classInstance, rs.getInt(columnIndex));
 		}
 	}
 

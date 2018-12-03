@@ -2,6 +2,7 @@ package io.resql.orm;
 
 import io.resql.SqlException;
 import io.resql.orm.converters.*;
+import org.slf4j.*;
 
 import java.lang.reflect.Field;
 import java.sql.*;
@@ -11,6 +12,7 @@ import java.util.function.Supplier;
 class FieldDirectAccessor<T> extends Accessor<T> {
 	private FromDbConverter[] converters;
 	private Supplier<T> factory;
+	private static final Logger log = LoggerFactory.getLogger(FieldDirectAccessor.class);
 
 	FieldDirectAccessor(LinkedHashMap<String, String> resultSetColumnTypes, Supplier<T> factory) throws SQLException {
 		this.factory = factory;
@@ -27,7 +29,10 @@ class FieldDirectAccessor<T> extends Accessor<T> {
 				}
 				unmappedColumns.add(getColumnDescription(columnEntry.getKey(), columnEntry.getValue()));
 			} else {
-				converters[columnIndex++] = findConvertor(columnEntry.getValue(), field.getType()).fromDb(columnIndex, field);
+				field.setAccessible(true);
+				FromDbConverter converter = findConvertor(columnEntry.getValue(), field.getType()).fromDb(columnIndex + 1, field);
+				log.debug("Found converter from DB to field {}: {}", field, converter);
+				converters[columnIndex ++] = converter;
 			}
 		}
 		if (unmappedColumns != null) {

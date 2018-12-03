@@ -20,15 +20,13 @@ public class AccessorFactory {
 	 * @param sql SQL query for this accessor. Used to distinguish exact accessor if there are many for given factoty or targetClass
 	 * @param resultSetColumnTypes map of column names to database specific column type from SQL query metadata. Used when creating new accessor
 	 * ORM class members
-	 * @param targetClass class of target ORM instances. Can be <code>null></code>. If not <code>null</code> then accessor will scan class and its ancestors
-	 * for constructor with appropriate arguments
 	 * @param <T> ORM class
 	 * @return accessor for ORM class instance initialization
 	 */
 	@SuppressWarnings( {"unchecked"})
 	public <T> Accessor<T> createOrGet(
-		CharSequence sql, LinkedHashMap<String,String> resultSetColumnTypes, Supplier<T> factory, Class<T> targetClass
-	) throws SQLException {
+		CharSequence sql, LinkedHashMap<String,String> resultSetColumnTypes, Supplier<T> factory) throws SQLException {
+		var targetClass = factory.get().getClass();
 		AccessorSet accessorSet = accessorSets.computeIfAbsent(targetClass, tClass -> new AccessorSet());
 		return  (Accessor<T>) accessorSet.get(sql, resultSetColumnTypes, factory, targetClass, converterFactory);
 	}
