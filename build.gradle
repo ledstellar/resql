@@ -1,27 +1,52 @@
-apply plugin: 'java'
+plugins {
+	id 'java-library'
+}
+
+group = "ru.resql"
 
 repositories {
 	mavenLocal()
-	maven { url "http://repo.spring.io/release" }
 	mavenCentral()
 }
 
 compileJava   {
-	sourceCompatibility = '11'
-	targetCompatibility = '11'
+	sourceCompatibility = '1.9'	// With minimum update can be downgraded to 1.8. But not lower
+	targetCompatibility = '1.9'
+}
+
+java {
+	withJavadocJar()
+	withSourcesJar()
 }
 
 compileTestJava   {
-	sourceCompatibility = '11'
-	targetCompatibility = '11'
+	sourceCompatibility = '9'
+	targetCompatibility = '9'
+/*	options.compilerArgs += ["--enable-preview"] */
 }
 
 dependencies {
 	compile 'ch.qos.logback:logback-classic:1.1.3', 'org.reflections:reflections:0.9.11'
 
-	testCompile "com.zaxxer:HikariCP:2.4.7", "org.springframework:spring-test:4.3.2.RELEASE",
-			"org.springframework:spring-context:4.3.2.RELEASE", "org.ow2.asm:asm:5.1", "org.ow2.asm:asm-commons:5.1",
-			"org.postgresql:postgresql:9.4.1211.jre7"
-	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.2.0'
-	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.2.0'
+	compileOnly "org.projectlombok:lombok:1.18.2"
+	annotationProcessor "org.projectlombok:lombok:1.18.2"
+	testCompileOnly "org.projectlombok:lombok:1.18.2"
+	testAnnotationProcessor "org.projectlombok:lombok:1.18.2"
+
+	testCompile "com.zaxxer:HikariCP:2.4.7", "org.postgresql:postgresql:42.2.14"
+	testImplementation('org.junit.jupiter:junit-jupiter-engine:5.6.2')
+}
+
+test {
+	useJUnitPlatform()
+	testLogging {
+		events "passed", "skipped", "failed"
+	}
+}
+
+jar {
+	manifest {
+		attributes( "Implementation-Title": "reSql streaming library",
+				"Implementation-Version": version )
+	}
 }

@@ -1,0 +1,14 @@
+<configuration>
+	<logger name="com.zaxxer.hikari.pool" level="INFO"/>
+	<logger name="org.reflections" level="WARN"/>
+
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%7relative %-5level %thread at .\(%F:%L\)%n%msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<root level="DEBUG">
+		<appender-ref ref="STDOUT" />
+	</root>
+</configuration>
