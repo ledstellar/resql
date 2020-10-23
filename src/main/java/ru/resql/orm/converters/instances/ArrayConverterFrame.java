@@ -60,52 +60,51 @@ public class ArrayConverterFrame implements ConverterFrame<Object> {
 				String inArrayColumnDbType = columnTypeName.substring(1);
 				PgType pgType = pgTypes.get(inArrayColumnDbType);
 				Class<?> componentType = destClass.getComponentType();
-				if (pgType != null) {
-					Converter<?> converter = converterFrames.getConverter(
-						componentType, destinationDescription, columnDescription, pgType.sqlType, inArrayColumnDbType
-					);
-					if (converter instanceof IdentityConverter) {
-						// Special case. We need an array with the EXACTLY same type that JDBC driver generates
-						// So we can pass an array directly to consumer
-						return new DirectArrayConverter(columnDescription, destinationDescription);
-					}
-					if (converter instanceof ToPrimitiveConverter) {
-						// Primitive arrays need special treatments as we can't iterate primitive arrays
-						// the same way we iterate Object array. Also conversion from Object to primitive type
-						// has to be of two steps (see below)
-						// TODO: need to improve logging of mapping (i.e. converters of arrays of custom types)
-						if (int.class.isAssignableFrom(componentType)) {
-							return new ArrayOfPrimitiveIntConverter(
-								columnDescription, destinationDescription, converter
-							);
-						}
-						if (long.class.isAssignableFrom(componentType)) {
-							return new ArrayOfPrimitiveLongConverter(
-								columnDescription, destinationDescription, converter
-							);
-						}
-						if (boolean.class.isAssignableFrom(componentType)) {
-							return new ArrayOfPrimitiveBooleanConverter(
-								columnDescription, destinationDescription, converter
-							);
-						}
-						if (double.class.isAssignableFrom(componentType)) {
-							return new ArrayOfPrimitiveDoubleConverter(
-								columnDescription, destinationDescription, converter
-							);
-						}
-						if (float.class.isAssignableFrom(componentType)) {
-							return new ArrayOfPrimitiveFloatConverter(
-								columnDescription, destinationDescription, converter
-							);
-						}
-					}
-					return new ArrayOfCustomTypeConverter(
-						columnDescription, destinationDescription, converter, componentType
-					);
-				} else {
-					throw new SqlException("Unknown PostgreSQL array type '" + columnTypeName + "'");
+				if (pgType == null) {
+					return null;
 				}
+				Converter<?> converter = converterFrames.getConverter(
+					componentType, destinationDescription, columnDescription, pgType.sqlType, inArrayColumnDbType
+				);
+				if (converter instanceof IdentityConverter) {
+					// Special case. We need an array with the EXACTLY same type that JDBC driver generates
+					// So we can pass an array directly to consumer
+					return new DirectArrayConverter(columnDescription, destinationDescription);
+				}
+				if (converter instanceof ToPrimitiveConverter) {
+					// Primitive arrays need special treatments as we can't iterate primitive arrays
+					// the same way we iterate Object array. Also conversion from Object to primitive type
+					// has to be of two steps (see below)
+					// TODO: need to improve logging of mapping (i.e. converters of arrays of custom types)
+					if (int.class.isAssignableFrom(componentType)) {
+						return new ArrayOfPrimitiveIntConverter(
+							columnDescription, destinationDescription, converter
+						);
+					}
+					if (long.class.isAssignableFrom(componentType)) {
+						return new ArrayOfPrimitiveLongConverter(
+							columnDescription, destinationDescription, converter
+						);
+					}
+					if (boolean.class.isAssignableFrom(componentType)) {
+						return new ArrayOfPrimitiveBooleanConverter(
+							columnDescription, destinationDescription, converter
+						);
+					}
+					if (double.class.isAssignableFrom(componentType)) {
+						return new ArrayOfPrimitiveDoubleConverter(
+							columnDescription, destinationDescription, converter
+						);
+					}
+					if (float.class.isAssignableFrom(componentType)) {
+						return new ArrayOfPrimitiveFloatConverter(
+							columnDescription, destinationDescription, converter
+						);
+					}
+				}
+				return new ArrayOfCustomTypeConverter(
+					columnDescription, destinationDescription, converter, componentType
+				);
 			}
 		}
 		return null;
