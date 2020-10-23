@@ -10,7 +10,10 @@ public class ArrayOfEnumsConverterFrame implements ConverterFrame<Enum<?>[]> {
 	@SuppressWarnings("unchecked") @Override
 	public Converter<Enum<?>[]> getConverter(ConverterFrames converterFrames, Class<?> destClass, String destinationDescription, String columnName, int columnSqlType,
 	 String columnTypeName) {
-		if (destClass.isArray() && columnSqlType == Types.OTHER) {
+		if (destClass.isArray() && (
+			columnSqlType == Types.ARRAY ||
+			columnSqlType == Types.OTHER // TODO: driver bug? If enum is NOT from public schema then it marked as type OTHER
+		)) {
 			Class<?> elementType = destClass.getComponentType();
 			if (elementType.isEnum()) {
 				@SuppressWarnings("rawtypes")
