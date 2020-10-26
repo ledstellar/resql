@@ -28,6 +28,9 @@ abstract class TestSelectsBase<DataSourceType extends DataSource> {
 		// Recreate test scheme
 		dropTestSchema();
 		pipe.execute("CREATE SCHEMA " + TEST_SCHEMA_NAME);
+		pipe.execute("CREATE TYPE anime_character AS ENUM("
+			+ "'Goku','AstroBoy','SpeedRacer','SpikeSpiegel','HimuraKenshin','NarutoUzumaki','EdwardElric',"
+			+ "'Pikachu','SailorMoon','AyanamiRei','ShotaroKaneda','L','MotokoKusanagi','D','ArseneLupinIII')");
 	}
 
 	private Properties loadProperties(String propertyFileName) throws IOException {
@@ -127,13 +130,14 @@ abstract class TestSelectsBase<DataSourceType extends DataSource> {
 			TransactionException.class,
 			() -> pipe.transactional((pipe) -> {
 				// Create test table
-				pipe.execute("CREATE TABLE " + TEST_SCHEMA_NAME + ".t1(id INTEGER)");
+				pipe.execute("CREATE TABLE t1(id INTEGER)");
 				// Check table exists in transaction
 				assertEquals(
 					1,
 					pipe.select(
 						String.class,
-						"SELECT tablename FROM pg_tables WHERE (schemaname, tablename) = ('" + TEST_SCHEMA_NAME + "', 't1')"
+						"SELECT tablename FROM pg_tables WHERE (schemaname, tablename) = (?, 't1')",
+						TEST_SCHEMA_NAME
 					).count()
 				);
 				// roll back transaction
@@ -144,7 +148,8 @@ abstract class TestSelectsBase<DataSourceType extends DataSource> {
 		0,
 			pipe.select(
 				String.class,
-				"SELECT tablename FROM pg_tables WHERE (schemaname, tablename) = ('" + TEST_SCHEMA_NAME + "', 't1')"
+				"SELECT tablename FROM pg_tables WHERE (schemaname, tablename) = (?, 't1')",
+				TEST_SCHEMA_NAME
  			).count(),
 			"Table still exists but it shouldn't as transaction must be rolled back due to IllegalArgumentException"
 		);
@@ -183,6 +188,16 @@ abstract class TestSelectsBase<DataSourceType extends DataSource> {
 				"SELECT 1 LIMIT 0"
 			).noneMatch(el -> { throw new NullPointerException(); })
 			// Predicate should not be called as no resultSet. So no exception should be thrown/
+		);
+	}
+
+	@Test void nullFirstElement() {
+		assertThrows(
+			NullPointerException.class,
+			() -> pipe.select(
+				Integer.class,
+				"SELECT unnest(ARRAY[null, -10, 0, 10]::INTEGER[])"
+			).findFirst().orElseThrow(() -> new RuntimeException("Can't happen"))
 		);
 	}
 
@@ -313,23 +328,34 @@ abstract class TestSelectsBase<DataSourceType extends DataSource> {
 		);
 	}
 
+	@Test void testSingleUntaggedEnum() {
+		assertEquals(
+			AnimeCharacter.ShotaroKaneda,
+			pipe.select(
+				AnimeCharacter.class,
+				"SELECT 'ShotaroKaneda'::anime_character"
+			 ).findFirst().orElse(null)
+		);
+	}
 
-	@Test void testTypedEnumArray() {
+	@Test void testBatch() {
 		pipe.transactional(
 			(pipe) -> {
-				pipe.execute("CREATE TYPE " + TEST_SCHEMA_NAME + ".anime_character AS ENUM("
-					+ "'Goku','AstroBoy','SpeedRacer','SpikeSpiegel','HimuraKenshin','NarutoUzumaki','EdwardElric',"
-					+ "'Pikachu','SailorMoon','AyanamiRei','ShotaroKaneda','L','MotokoKusanagi','D','ArseneLupinIII')");
-				AnimeCharacter[] reservedStates = pipe.select(
-						AnimeCharacter[].class,
-					"SELECT ARRAY['AstroBoy', 'ArseneLupinIII', 'AyanamiRei']::" + TEST_SCHEMA_NAME + ".anime_character[]"
-					).findAny()
-					.orElse(null);
-				assertArrayEquals(
-					new AnimeCharacter[]{AnimeCharacter.AstroBoy, AnimeCharacter.ArseneLupinIII, AnimeCharacter.AyanamiRei},
-					reservedStates
-				);
+				pipe.execute("CREATE TABLE dinasties(id INTEGER, id_dinasty INTEGER, id_parent INTEGER, name TEXT)");
+
 			}
+		);
+	}
+
+	@Test void testTypedEnumArray() {
+		AnimeCharacter[] reservedStates = pipe.select(
+				AnimeCharacter[].class,
+			"SELECT ARRAY['AstroBoy', 'ArseneLupinIII', 'AyanamiRei']::anime_character[]"
+			).findAny()
+			.orElse(null);
+		assertArrayEquals(
+			new AnimeCharacter[]{AnimeCharacter.AstroBoy, AnimeCharacter.ArseneLupinIII, AnimeCharacter.AyanamiRei},
+			reservedStates
 		);
 	}
 

@@ -11,7 +11,7 @@ public abstract class IntSqlStreamChain implements IntStream {
 	/** Data (element) source for this stream chain or <code>null</code> if this chain is the root element source */
 	IntSqlStreamChain source;
 
-	SqlDataSource getRootSqlDataSource() {
+	SelectWithParamSqlDataSource getRootSqlDataSource() {
 		IntSqlStreamChain source = this;
 		do {
 			IntSqlStreamChain prevSource = source.source;
@@ -183,7 +183,7 @@ public abstract class IntSqlStreamChain implements IntStream {
 		try {
 			return operation.evaluate();
 		} catch (SqlException sqlException) {
-			SqlDataSource sqlDataSource = getRootSqlDataSource();
+			SelectWithParamSqlDataSource sqlDataSource = getRootSqlDataSource();
 			sqlException.setRequestSql(sqlDataSource.getQueryDebug());
 			sqlException.setCurrentResultSet(ResultSetDebugFormatter.format(sqlDataSource.resultSet));
 			throw sqlException;

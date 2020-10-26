@@ -15,7 +15,7 @@ public abstract class ObjectSqlStreamChain<ElementType> implements Stream<Elemen
 		this.source = source;
 	}
 
-	SqlDataSource getRootSqlDataSource() {
+	SelectWithParamSqlDataSource getRootSqlDataSource() {
 		ObjectSqlStreamChain<?> source = this;
 		do {
 			ObjectSqlStreamChain<?> prevSource = source.source;
@@ -190,7 +190,7 @@ public abstract class ObjectSqlStreamChain<ElementType> implements Stream<Elemen
 		try {
 			operation.evaluate();
 		} catch (SqlException sqlException) {
-			SqlDataSource sqlDataSource = getRootSqlDataSource();
+			SelectWithParamSqlDataSource sqlDataSource = getRootSqlDataSource();
 			sqlException.setRequestSql(sqlDataSource.getQueryDebug());
 			sqlException.setCurrentResultSet(ResultSetDebugFormatter.format(sqlDataSource.resultSet));
 			throw sqlException;
@@ -203,7 +203,7 @@ public abstract class ObjectSqlStreamChain<ElementType> implements Stream<Elemen
 		try {
 			return operation.evaluate();
 		} catch (SqlException sqlException) {
-			SqlDataSource sqlDataSource = getRootSqlDataSource();
+			SelectWithParamSqlDataSource sqlDataSource = getRootSqlDataSource();
 			sqlException.setRequestSql(sqlDataSource.getQueryDebug());
 			sqlException.setCurrentResultSet(ResultSetDebugFormatter.format(sqlDataSource.resultSet));
 			throw sqlException;

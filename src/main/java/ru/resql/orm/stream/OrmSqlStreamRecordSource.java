@@ -16,10 +16,10 @@ public class OrmSqlStreamRecordSource<ElementType> extends ObjectSqlStreamChain<
 	private final ConverterFrames converterFrames;
 	private final AccessorFactory accessorFactory;
 	private Accessor<ElementType> accessor;
-	private final SqlDataSource sqlDataSource;
+	private final SelectWithParamSqlDataSource sqlDataSource;
 
 	public OrmSqlStreamRecordSource(
-		ConverterFrames converterFrames, SqlDataSource sqlDataSource,
+		ConverterFrames converterFrames, SelectWithParamSqlDataSource sqlDataSource,
 		AccessorFactory accessorFactory, Supplier<ElementType> factory
 	) {
 		super(null);
@@ -30,7 +30,7 @@ public class OrmSqlStreamRecordSource<ElementType> extends ObjectSqlStreamChain<
 	}
 
 	@Override
-	public SqlDataSource getSqlDataSource() {
+	public SelectWithParamSqlDataSource getSqlDataSource() {
 		return sqlDataSource;
 	}
 

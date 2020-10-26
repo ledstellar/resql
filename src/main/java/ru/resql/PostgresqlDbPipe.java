@@ -13,10 +13,10 @@ public class PostgresqlDbPipe extends DbPipeBase implements DbPipe {
 		return new ConnectionWrapper(dbManager, isReadOnly);
 	}
 
-	@Override
+/*	@Override
 	public <ReturnType> ReturnType batch(Mapper<ReturnType> mapper, CharSequence sql, Object... args) {
 		return null;
-	}
+	} */
 
 /*	@Override
 	public <ReturnType> SqlStreamRecordSource<ReturnType> streamBatch(Supplier<ReturnType> factory, StreamMapper<ReturnType> mapper, CharSequence sql, Object... args) {

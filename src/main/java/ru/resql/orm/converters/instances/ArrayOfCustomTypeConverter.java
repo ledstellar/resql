@@ -5,10 +5,10 @@ import ru.resql.orm.converters.*;
 import java.sql.*;
 
 public class ArrayOfCustomTypeConverter  extends ConverterImpl<Object> {
-	private final Converter<?> nestedConverter;
+	private final Converter<Object> nestedConverter;
 	private final Class<?> componentType;
 
-	public ArrayOfCustomTypeConverter(String columnDescription, String fieldDescription, Converter<?> nestedConverter, Class<?> componentType) {
+	public ArrayOfCustomTypeConverter(String columnDescription, String fieldDescription, Converter<Object> nestedConverter, Class<?> componentType) {
 		super(columnDescription, fieldDescription);
 		this.nestedConverter = nestedConverter;
 		this.componentType = componentType;

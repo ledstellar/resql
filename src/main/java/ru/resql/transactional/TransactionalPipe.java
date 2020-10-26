@@ -1,8 +1,8 @@
 package ru.resql.transactional;
 
-import ru.resql.Mapper;
 import ru.resql.orm.stream.*;
 
+import java.util.Collection;
 import java.util.function.Supplier;
 
 public interface TransactionalPipe {
@@ -38,8 +38,6 @@ public interface TransactionalPipe {
 	LongSqlStreamRecordSource selectLong(CharSequence sql, Object ... args);
 	*/
 
-	<ReturnType> ReturnType batch(Mapper<ReturnType> mapper, CharSequence sql, Object... args);
-
 	/**
 	 * Execute given (supposedly update) query
 	 * @param sql the query
@@ -47,4 +45,6 @@ public interface TransactionalPipe {
 	 * @return number of records processed (if database returns this info)
 	 */
 	int execute(CharSequence sql, Object... params);
+
+	void batchSync(Collection<?> data);
 }

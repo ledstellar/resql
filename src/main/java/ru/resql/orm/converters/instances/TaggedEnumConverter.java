@@ -8,10 +8,10 @@ import java.util.HashMap;
 import static ru.resql.util.StringUtils.toDebugString;
 
 public class TaggedEnumConverter implements Converter<Enum<?>> {
-	private final Converter<?> converter;
+	private final Converter<Enum<?>> converter;
 	private final HashMap<Object, Enum<?>> tagToEnumTable;
 
-	TaggedEnumConverter(Converter<?> converter, HashMap<Object, Enum<?>> tagToEnumTable) {
+	TaggedEnumConverter(Converter<Enum<?>> converter, HashMap<Object, Enum<?>> tagToEnumTable) {
 		this.converter = converter;
 		this.tagToEnumTable = tagToEnumTable;
 	}

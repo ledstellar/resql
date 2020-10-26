@@ -16,9 +16,9 @@ public class TransactionalPipeImpl extends DbPipeBase {
 		return connectionWrapper;
 	}
 
-	@Override
+/*	@Override
 	public <ReturnType> ReturnType batch(Mapper<ReturnType> mapper, CharSequence sql, Object... args) {
 		// TODO: implement
 		throw new RuntimeException("Not implemented yet");
-	}
+	} */
 }

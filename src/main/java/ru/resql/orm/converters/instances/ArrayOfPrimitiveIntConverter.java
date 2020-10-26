@@ -13,7 +13,7 @@ public class ArrayOfPrimitiveIntConverter extends ConverterImpl<Object> {
 	}
 
 	@Override
-	public Object convert(Object columnValue) throws SQLException, ConverterException {
+	public int[] convert(Object columnValue) throws SQLException, ConverterException {
 		Object[] dbArray = (Object[])((Array)columnValue).getArray();
 		int[] retArray = (int[])java.lang.reflect.Array.newInstance(int.class, dbArray.length);
 		for (int i = dbArray.length - 1; i >= 0; -- i) {

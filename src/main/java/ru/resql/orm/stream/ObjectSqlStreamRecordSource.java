@@ -11,10 +11,10 @@ public class ObjectSqlStreamRecordSource<ElementType> extends ObjectSqlStreamCha
 {
 	final Class<ElementType> elementClass;
 	Converter<ElementType> converter;
-	SqlDataSource sqlDataSource;
+	SelectWithParamSqlDataSource sqlDataSource;
 	final ConverterFrames converterFrames;
 
-	public ObjectSqlStreamRecordSource(Class<ElementType> elementClass, SqlDataSource sqlDataSource, ConverterFrames converterFrames) {
+	public ObjectSqlStreamRecordSource(Class<ElementType> elementClass, SelectWithParamSqlDataSource sqlDataSource, ConverterFrames converterFrames) {
 		super(null);
 		this.elementClass = elementClass;
 		this.sqlDataSource = sqlDataSource;
@@ -22,7 +22,7 @@ public class ObjectSqlStreamRecordSource<ElementType> extends ObjectSqlStreamCha
 	}
 
 	@Override
-	public SqlDataSource getSqlDataSource() {
+	public SelectWithParamSqlDataSource getSqlDataSource() {
 		return sqlDataSource;
 	}
 

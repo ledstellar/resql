@@ -6,6 +6,7 @@ import ru.resql.transactional.TransactionalPipe;
 import ru.resql.util.SqlQueryDebugFormatter;
 
 import java.sql.*;
+import java.util.Collection;
 import java.util.function.Supplier;
 
 import static ru.resql.DbManager.RESQL_SELECT;
@@ -21,8 +22,8 @@ public abstract class DbPipeBase implements TransactionalPipe {
 
 	protected abstract ConnectionWrapper getConnectionWrapper(boolean isReadOnly);
 
-	SqlDataSource getReadOnlySqlDataSource(CharSequence sql, Object[] args) {
-		return new SqlDataSource(getConnectionWrapper(true), log, sql, args);
+	SelectWithParamSqlDataSource getReadOnlySqlDataSource(CharSequence sql, Object[] args) {
+		return new SelectWithParamSqlDataSource(getConnectionWrapper(true), log, sql, args);
 	}
 
 	@Override
@@ -44,6 +45,13 @@ public abstract class DbPipeBase implements TransactionalPipe {
 	@Override
 	public IntSqlStreamRecordSource selectIntegers(CharSequence sql, Object... args) {
 		return new IntSqlStreamRecordSource(getReadOnlySqlDataSource(sql, args), dbManager.getConverterFrames());
+	}
+
+	@Override
+	public void batchSync(Collection<?> data) {
+/*		SqlDataSource batchSyncDataSource = new BatchSyncDataSource();
+		dbManager.getAccessorFactory().createOrGet( */
+
 	}
 
 	public int execute(CharSequence sql, Object... params) {

@@ -7,11 +7,11 @@ import java.sql.*;
 import java.util.function.IntConsumer;
 
 public class IntSqlStreamRecordSource extends IntSqlStreamChain {
-	final SqlDataSource sqlDataSource;
+	final SelectWithParamSqlDataSource sqlDataSource;
 	Converter<Integer> converter;
 	private final ConverterFrames converterFrames;
 
-	public IntSqlStreamRecordSource(SqlDataSource sqlDataSource, ConverterFrames converterFrames) {
+	public IntSqlStreamRecordSource(SelectWithParamSqlDataSource sqlDataSource, ConverterFrames converterFrames) {
 		this.sqlDataSource = sqlDataSource;
 		this.converterFrames = converterFrames;
 	}
