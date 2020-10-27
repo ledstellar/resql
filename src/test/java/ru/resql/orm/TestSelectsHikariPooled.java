@@ -13,7 +13,7 @@ import java.util.Properties;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TestSelectsHikariPooled extends TestSelectsBase<HikariDataSource> {
+public class TestSelectsHikariPooled extends TestSelectsBase<HikariDataSource> {
 	private String poolName;
 	private final HikariPoolMXBean poolProxy;
 	private int connectionsBefore;

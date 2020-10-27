@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.util.*;
 
 @Slf4j @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TestSelectsNoPool extends TestSelectsBase<PGSimpleDataSource> {
+public class TestSelectsNoPool extends TestSelectsBase<PGSimpleDataSource> {
 	TestSelectsNoPool() throws IOException, SQLException {
 		super("pgsql_pgjdbc.properties", "pgsql no pool", log);
 	}
