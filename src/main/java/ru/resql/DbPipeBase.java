@@ -48,7 +48,7 @@ public abstract class DbPipeBase implements TransactionalPipe {
 	}
 
 	@Override
-	public void batchSync(Collection<?> data) {
+	public void batchUpsert(Collection<?> data) {
 /*		SqlDataSource batchSyncDataSource = new BatchSyncDataSource();
 		dbManager.getAccessorFactory().createOrGet( */
 

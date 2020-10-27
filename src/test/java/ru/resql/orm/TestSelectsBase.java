@@ -23,23 +23,16 @@ abstract class TestSelectsBase<DataSourceType extends DataSource> {
 	private final static String TEST_SCHEMA_NAME = "__resql_test";
 
 	TestSelectsBase(String dbPropertyFileName, String dataSourceDescription, Logger log) throws IOException, SQLException {
-		DataSourceType dataSource = getDataSource(loadProperties(dbPropertyFileName));
-		pipe = new PostgresqlDbManager(dataSource, dataSourceDescription).getPipe(log);
+		pipe = new PostgresqlDbManager(
+			getDataSource(TestUtils.loadProperties(getClass(), dbPropertyFileName)),
+			dataSourceDescription
+		).getPipe(log);
 		// Recreate test scheme
 		dropTestSchema();
 		pipe.execute("CREATE SCHEMA " + TEST_SCHEMA_NAME);
 		pipe.execute("CREATE TYPE anime_character AS ENUM("
 			+ "'Goku','AstroBoy','SpeedRacer','SpikeSpiegel','HimuraKenshin','NarutoUzumaki','EdwardElric',"
 			+ "'Pikachu','SailorMoon','AyanamiRei','ShotaroKaneda','L','MotokoKusanagi','D','ArseneLupinIII')");
-	}
-
-	private Properties loadProperties(String propertyFileName) throws IOException {
-		Properties props = new Properties();
-		Class<?> clazz = getClass();
-		String pathToRoot = clazz.getPackage().getName().replace(".", "/").replaceAll("[^/]+", "..");
-		InputStream is = clazz.getResourceAsStream(pathToRoot + "/" + propertyFileName);
-		props.load(is);
-		return props;
 	}
 
 	abstract DataSourceType getDataSource(Properties properties)  throws SQLException;
@@ -335,15 +328,6 @@ abstract class TestSelectsBase<DataSourceType extends DataSource> {
 				AnimeCharacter.class,
 				"SELECT 'ShotaroKaneda'::anime_character"
 			 ).findFirst().orElse(null)
-		);
-	}
-
-	@Test void testBatch() {
-		pipe.transactional(
-			(pipe) -> {
-				pipe.execute("CREATE TABLE dinasties(id INTEGER, id_dinasty INTEGER, id_parent INTEGER, name TEXT)");
-
-			}
 		);
 	}
 

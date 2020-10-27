@@ -46,5 +46,5 @@ public interface TransactionalPipe {
 	 */
 	int execute(CharSequence sql, Object... params);
 
-	void batchSync(Collection<?> data);
+	void batchUpsert(Collection<?> data);
 }
