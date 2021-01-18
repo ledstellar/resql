@@ -1,5 +1,16 @@
+buildscript {
+	repositories {
+		jcenter()
+	}
+	dependencies {
+		classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.18.3"
+	}
+}
+
 plugins {
+	id 'com.jfrog.artifactory' version '4.18.3'
 	id 'java-library'
+	id 'maven-publish'
 }
 
 group = "ru.resql"
@@ -7,6 +18,37 @@ group = "ru.resql"
 repositories {
 	mavenLocal()
 	mavenCentral()
+}
+
+artifactoryPublish {
+    publications('mavenJava')
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+artifactory {
+    contextUrl = 'http://owl.jfrog.io/artifactory'
+
+    publish {
+        repository {
+            repoKey = 'resql'
+	    // Publisher credentials. Should be set in ~/.gradle/gradle.properties
+            username = "${artifactory_user}"
+            password = "${artifactory_password}"
+        }
+        defaults {
+            publications('mavenJava')
+            publishArtifacts = true
+	    publishBuildInfo = false
+            publishPom = true
+        }
+    }
 }
 
 compileJava   {
@@ -22,11 +64,10 @@ java {
 compileTestJava   {
 	sourceCompatibility = '9'
 	targetCompatibility = '9'
-/*	options.compilerArgs += ["--enable-preview"] */
 }
 
 dependencies {
-	compile 'ch.qos.logback:logback-classic:1.1.3', 'org.reflections:reflections:0.9.11'
+	compile "ch.qos.logback:logback-classic:1.1.3", "org.reflections:reflections:0.9.11"
 
 	compileOnly "org.projectlombok:lombok:1.18.2"
 	annotationProcessor "org.projectlombok:lombok:1.18.2"
@@ -34,9 +75,9 @@ dependencies {
 	testAnnotationProcessor "org.projectlombok:lombok:1.18.2"
 
 	testCompile "com.zaxxer:HikariCP:2.4.7", "org.postgresql:postgresql:42.2.14",
-	 	'org.junit.platform:junit-platform-runner:1.7.0'
+		"org.junit.platform:junit-platform-runner:1.7.0"
 
-	testImplementation 'org.junit.jupiter:junit-jupiter:5.7.0'
+	testImplementation "org.junit.jupiter:junit-jupiter:5.7.0"
 }
 
 test {
