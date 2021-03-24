@@ -1,12 +1,17 @@
 package ru.resql;
 
 import org.slf4j.Logger;
+import ru.resql.orm.Accessor;
+import ru.resql.orm.annotations.Table;
+import ru.resql.orm.batch.BatchSyncDataSource;
+import ru.resql.orm.converters.todb.TypedCollection;
 import ru.resql.orm.stream.*;
+import ru.resql.orm.vendor.postgresql.PgType;
 import ru.resql.transactional.TransactionalPipe;
 import ru.resql.util.SqlQueryDebugFormatter;
 
 import java.sql.*;
-import java.util.Collection;
+import java.util.*;
 import java.util.function.Supplier;
 
 import static ru.resql.DbManager.RESQL_SELECT;
@@ -49,9 +54,19 @@ public abstract class DbPipeBase implements TransactionalPipe {
 
 	@Override
 	public void batchUpsert(Collection<?> data) {
-/*		SqlDataSource batchSyncDataSource = new BatchSyncDataSource();
-		dbManager.getAccessorFactory().createOrGet( */
+		if (data.size() == 0) {
+			return;
+		}
+		try {
+			Class<?> elementClass = data.iterator().next().getClass();
+			ConnectionWrapper connectionWrapper = getConnectionWrapper(false);
+			SqlDataSource batchSyncDataSource = new BatchSyncDataSource(connectionWrapper, log, elementClass);
+			Accessor<?> accessor = dbManager.getAccessorFactory()
+				.createOrGet(batchSyncDataSource, elementClass, dbManager.converterFrames);
 
+		} catch (SQLException sqlException) {
+			throw new SqlException("Exception in batch", sqlException);
+		}
 	}
 
 	public int execute(CharSequence sql, Object... params) {
@@ -87,6 +102,30 @@ public abstract class DbPipeBase implements TransactionalPipe {
 	private static void fillStatementWithParams(PreparedStatement statement, Object[] params) throws SQLException {
 		int index = 1;
 		for (Object param : params) {
+			if (param instanceof TypedCollection) {
+				((TypedCollection<?>) param).setStatementParam(statement, index);
+				continue;
+			}
+			if (param != null) {
+				Class<?> paramClass = param.getClass();
+				if (paramClass.isArray()) {
+					statement.setArray(
+						index ++,
+						statement.getConnection().createArrayOf(
+							PgType.paramJavaClassToDefaultDbType.get(paramClass.getComponentType()),
+							(Object[])param
+						)
+					);
+					continue;
+				}
+			}
+			if (param instanceof Collection) {
+				throw new SQLException(
+					"Parameter /*" + index + "*/ is of " + param.getClass().getSimpleName() + " class. " +
+						"Collection type SQL params are not allowed. " +
+						"Use TypedCollection.of(collectionParam, collectionItemClass) instead"
+				);
+			}
 			statement.setObject(index++, param);
 		}
 	}

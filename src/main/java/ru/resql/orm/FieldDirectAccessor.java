@@ -17,7 +17,7 @@ class FieldDirectAccessor<ElementType> extends Accessor<ElementType> {
 	private final static ColumnCollator columnCollator = new PossibleCamelCaseCollator();
 
 	FieldDirectAccessor(
-		Logger log, ResultSetMetaData resultSetMetaData, Class<ElementType> ormClass, ConverterFrames converterFrames
+		Logger log, ResultSetMetaData resultSetMetaData, boolean isOptionalFields, Class<ElementType> ormClass, ConverterFrames converterFrames
 	) throws SQLException {
 		int columnCount = resultSetMetaData.getColumnCount();
 		converters = new Converter[columnCount];
@@ -61,7 +61,7 @@ class FieldDirectAccessor<ElementType> extends Accessor<ElementType> {
 		if (ormMappings != null) {
 			log.debug(RESQL_MAPPINGS, ormMappings.toString());
 		}
-		if (unmappedColumns != null) {
+		if (unmappedColumns != null && ! isOptionalFields) {
 			throw new SqlException("Next column(s) was not mapped: " + String.join(", ", unmappedColumns));
 		}
 	}

@@ -2,6 +2,7 @@ package ru.resql.transactional;
 
 import ru.resql.orm.stream.*;
 
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.function.Supplier;
 

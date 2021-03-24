@@ -35,7 +35,7 @@ public class SqlQueryDebugFormatter {
 		int fragmentStart = 0;
 		for (int i = 0; i < params.length; ++ i) {
 			dSql.append(sql, fragmentStart, paramIndexes[i]);
-			dSql.append("/* ").append(i + 1).append(" */ ");
+			dSql.append("/*").append(i + 1).append("*/ ");
 			appendParam(dSql, params[i]);
 			fragmentStart = paramIndexes[i] + 1;	// bypass '?' sign
 		}

@@ -17,6 +17,7 @@ public class SelectWithParamSqlDataSource extends SqlDataSource {
 	private final Object[] params;
 	private boolean isConnectionClosed;
 	private int fetchSize = DEFAULT_FETCH_SIZE;
+	protected ResultSet resultSet;
 
 	public SelectWithParamSqlDataSource(ConnectionWrapper connectionSource, Logger log, CharSequence sql, Object[] params) {
 		super(connectionSource, log);
@@ -30,6 +31,16 @@ public class SelectWithParamSqlDataSource extends SqlDataSource {
 
 	public Object getAccessorKey() {
 		return getQuery();
+	}
+
+	@Override
+	public ResultSetMetaData getResultSetMetaData() throws SQLException {
+		return resultSet.getMetaData();
+	}
+
+	@Override
+	public boolean isOptionalFields() {
+		return false;
 	}
 
 	public void close() {

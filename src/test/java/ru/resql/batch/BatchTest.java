@@ -1,17 +1,17 @@
 package ru.resql.batch;
 
-import com.google.common.base.Functions;
 import com.zaxxer.hikari.*;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import ru.resql.*;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
+import static ru.resql.TestSuite.*;
 
 @Slf4j
 public class BatchTest {
@@ -138,15 +138,18 @@ public class BatchTest {
 			new HikariDataSource(new HikariConfig(props)),
 			props.getProperty("poolName")
 		).getPipe(log);
+		recreateTestSchema(pipe);
 	}
 
+
+/* FIXME: implements this
 	@Test
-	public void testIdUpdates() {
+	public void testIdUpdates() throws SQLException {
 		pipe.execute(
-			"CREATE TABLE season_cast (\n" +
+			"CREATE TABLE IF NOT EXISTS season_cast (\n" +
 				"id serial NOT NULL,\n" +
 				"name text NOT NULL,\n" +
-				"cast_type text NOT NULL,\n" +
+				"appearance text NOT NULL,\n" +
 				"CONSTRAINT season_cast_pk PRIMARY KEY (id),\n" +
 				"CONSTRAINT season_cast_uniq UNIQUE (name)" +
 			")"
@@ -156,8 +159,8 @@ public class BatchTest {
 			final int finalSeasonNumber = seasonNumber;
 			// remove disappeared casts
 			pipe.execute(
-				"DELETE FROM season_cast WHERE id NOT IN (?)",
-				seasonCasts.stream().map(Cast::getId).collect(Collectors.toList())
+				"DELETE FROM season_cast WHERE id != ALL(?)",
+				(Object)seasonCasts.stream().map(Cast::getId).toArray(Integer[]::new)
 			);
 			// get casts with cleaned ids
 			List<Cast> seasonCastsWithouIds = seasonCasts.stream().map(Cast::getCleanIdCopy).collect(Collectors.toList());
@@ -180,4 +183,5 @@ public class BatchTest {
 			++ seasonNumber;
 		}
 	}
+	*/
 }

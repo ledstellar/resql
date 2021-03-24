@@ -15,7 +15,10 @@ class AccessorKit<AccessorType> {
 		Object accessorKey = sqlDataSource.getAccessorKey();
 		Accessor<?> accessor = accessors.get(accessorKey);
 		if (accessor == null) {
-			accessor = Accessor.newInstance(sqlDataSource.getLogger(), sqlDataSource.getResultSetMetaData(), targetClass, converterFrames);
+			accessor = Accessor.newInstance(
+				sqlDataSource.getLogger(), sqlDataSource.getResultSetMetaData(), sqlDataSource.isOptionalFields(),
+				targetClass, converterFrames
+			);
 			accessors.put(accessorKey, accessor);
 		}
 		//noinspection unchecked

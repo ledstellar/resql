@@ -20,9 +20,9 @@ public abstract class Accessor<ElementType> {
 	 * @param targetClass ORM class. When set then access will scan ORM class for appropriate constructor
 	 */
 	static <T> Accessor<T> newInstance(
-		Logger log, ResultSetMetaData resultSetMetaData, Class<T> targetClass, ConverterFrames converterFrames
+		Logger log, ResultSetMetaData resultSetMetaData, boolean isOptionalFields, Class<T> targetClass, ConverterFrames converterFrames
 	) throws SQLException {
-			return new FieldDirectAccessor<>(log, resultSetMetaData, targetClass, converterFrames);
+			return new FieldDirectAccessor<>(log, resultSetMetaData, isOptionalFields, targetClass, converterFrames);
 // TODO: implement
 //			return new ConstructorAccessor<>(resultSetColumnTypes, targetClass, converterFrames);
 	}

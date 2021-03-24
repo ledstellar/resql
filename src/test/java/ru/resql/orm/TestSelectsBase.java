@@ -14,32 +14,26 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static ru.resql.TestSuite.*;
 import static ru.resql.orm.RatedAnimeCharacter.*;
 
 @Slf4j
 @TestMethodOrder(SchemaDroppingMethodToTheEnd.class)
 abstract class TestSelectsBase<DataSourceType extends DataSource> {
 	private final PostgresqlDbPipe pipe;
-	private final static String TEST_SCHEMA_NAME = "__resql_test";
 
 	TestSelectsBase(String dbPropertyFileName, String dataSourceDescription, Logger log) throws IOException, SQLException {
 		pipe = new PostgresqlDbManager(
 			getDataSource(TestUtils.loadProperties(getClass(), dbPropertyFileName)),
 			dataSourceDescription
 		).getPipe(log);
-		// Recreate test scheme
-		dropTestSchema();
-		pipe.execute("CREATE SCHEMA " + TEST_SCHEMA_NAME);
+		recreateTestSchema(pipe);
 		pipe.execute("CREATE TYPE anime_character AS ENUM("
 			+ "'Goku','AstroBoy','SpeedRacer','SpikeSpiegel','HimuraKenshin','NarutoUzumaki','EdwardElric',"
 			+ "'Pikachu','SailorMoon','AyanamiRei','ShotaroKaneda','L','MotokoKusanagi','D','ArseneLupinIII')");
 	}
 
 	abstract DataSourceType getDataSource(Properties properties)  throws SQLException;
-
-	private void dropTestSchema() {
-		pipe.execute("DROP SCHEMA IF EXISTS " + TEST_SCHEMA_NAME + " CASCADE");
-	}
 
 	@Test
 	void testForEach() {
@@ -148,6 +142,29 @@ abstract class TestSelectsBase<DataSourceType extends DataSource> {
 		);
 	}
 
+/* FIXME: implement support for this
+	@Test void testEmpty4dArray() {
+		int[][][][] arr = {{{{1,2},{3,4}},{{5,6},{7,8}}},{{{10,11},{12,13}},{{14,15},{16,17}}}};
+		assertEquals(
+			arr,
+			pipe.select(
+				int[][][][].class,
+				"SELECT NULL::INTEGER[][][][]"
+			).findFirst().orElseThrow(() -> new RuntimeException("Empty response instead of 4-dimensional array of int"))
+		);
+	}
+
+	@Test void test4dArray() {
+		int[][][][] arr = {{{{1,2},{3,4}},{{5,6},{7,8}}},{{{10,11},{12,13}},{{14,15},{16,17}}}};
+		assertEquals(
+			arr,
+			pipe.select(
+				int[][][][].class,
+				"SELECT ARRAY[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[10,11],[12,13]],[[14,15],[16,17]]]]"
+			).findFirst().orElseThrow(() -> new RuntimeException("Empty response instead of 4-dimensional array of int"))
+		);
+	}
+*/
 	@Test void testNoneMatch() {
 		assertTrue(
 			pipe.select(
@@ -207,6 +224,31 @@ abstract class TestSelectsBase<DataSourceType extends DataSource> {
 		);
 	}
 
+	@Test void checkCollectionsAreNotAllowed() {
+		assertThrows(
+			SqlException.class,
+			() -> pipe
+				.execute("SELECT ?", Arrays.asList(1, 2, 3))
+		);
+	}
+
+/*
+	@Test void checkUntypedParams() {
+		pipe.execute("DROP TABLE IF EXISTS tmp");
+		pipe.execute(
+			"SELECT *"
+			+ " INTO tmp"
+			+ " FROM (VALUES"
+				+ " (1, 'String', 1.01, TRUE),"
+				+ " (2, 'Another string', NULL, FALSE),"
+				+ " (3, 'String', 3.03, NULL),"
+				+ " (4, NULL, 1.01, NULL),"
+				+ " (5, 'String', 5.05, TRUE)"
+			+ " ) AS t(id, txt, dbl, bl)"
+		);
+		pipe.execute("INSERT INTO tmp(id, txt, dbl) VALUES (?, ?, ?)", 5, null, null);
+	}
+*/
 	@Test void streamingTest() {
 		long recordCount = 500_000;
 		long[] lastValue = new long[]{0};
@@ -314,7 +356,9 @@ abstract class TestSelectsBase<DataSourceType extends DataSource> {
 			3,
 			pipe.select(
 				RatedAnimeCharacter.class,
-				"SELECT * FROM unnest(ARRAY[2, 10, 15]::INTEGER[])"
+				"SELECT * FROM unnest(ARRAY[" +
+				 AstroBoy.getTag() + ", " + ArseneLupinIII.getTag() + ", " + AyanamiRei.getTag()
+				 + "]::INTEGER[])"
 			).peek(state -> assertTrue(state.name().startsWith("A")))
 				.count(),
 			"Wrong number of constants"
@@ -344,6 +388,6 @@ abstract class TestSelectsBase<DataSourceType extends DataSource> {
 	}
 
 	@Test void atLastDropTestSchema() {
-		dropTestSchema();
+		dropTestSchema(pipe);
 	}
 }

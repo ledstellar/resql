@@ -24,4 +24,9 @@ public class Cast {
 	public Cast getCleanIdCopy() {
 		return new Cast(name, appearance);
 	}
+
+	@Override
+	public String toString() {
+		return "(" + id + ") " + name + ": " + appearance;
+	}
 }

@@ -13,6 +13,7 @@ import static ru.resql.orm.vendor.postgresql.PgSqlType.*;
 public enum PgType {
 	int2("java.lang.Integer", Short.class, SMALLINT, true),
 	int4("java.lang.Integer", Integer.class, INTEGER, true),
+	serial("java.lang.Integer", Integer.class, INTEGER, false),
 	oid("java.lang.Long", Long.class, OID, false),
 	int8("java.lang.Long", Long.class, BIGINT, true),
 	money("java.lang.Double", BigDecimal.class, MONEY, false),

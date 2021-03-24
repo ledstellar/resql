@@ -8,7 +8,6 @@ import java.sql.*;
 public abstract class SqlDataSource {
 	protected final Logger log;
 	protected final ConnectionWrapper connectionSource;
-	protected ResultSet resultSet;
 
 	public SqlDataSource(ConnectionWrapper connectionSource, Logger log) {
 		this.log = log;
@@ -21,11 +20,11 @@ public abstract class SqlDataSource {
 		return log;
 	}
 
-	public ResultSetMetaData getResultSetMetaData() throws SQLException {
-		return resultSet.getMetaData();
-	}
+	public abstract ResultSetMetaData getResultSetMetaData() throws SQLException;
 
 	public void close() {
 		connectionSource.close();
 	}
+
+	public abstract boolean isOptionalFields();
 }

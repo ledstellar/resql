@@ -1,15 +1,18 @@
 package ru.resql;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.*;
 import ru.resql.orm.AccessorFactory;
 import ru.resql.orm.converters.ConverterFrames;
 
 import javax.sql.DataSource;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 
 /**
  * Connection(s) tied to a particular database.
  */
+@Slf4j
 public abstract class DbManager {
 	AccessorFactory accessorFactory;
 	ConverterFrames converterFrames;
@@ -49,7 +52,7 @@ public abstract class DbManager {
 	}
 
 	public String getConnectionSourceDescription() {
-		return dataSourceDescription == null ? "" : (" " + dataSourceDescription);
+		return " " + (dataSourceDescription == null ? getClass() : dataSourceDescription);
 	}
 
 	public AccessorFactory getAccessorFactory() {
