@@ -33,7 +33,7 @@ publishing {
 }
 
 artifactory {
-    contextUrl = 'http://owl.jfrog.io/artifactory'
+    contextUrl = 'https://owl.jfrog.io/artifactory'
 
     publish {
         repository {
@@ -75,7 +75,7 @@ dependencies {
 	testAnnotationProcessor "org.projectlombok:lombok:1.18.2"
 
 	testCompile "com.zaxxer:HikariCP:2.4.7", "org.postgresql:postgresql:42.2.14",
-	 	'org.junit.platform:junit-platform-runner:1.7.0'
+		'org.junit.platform:junit-platform-runner:1.7.0'
 
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.7.0'
 }
